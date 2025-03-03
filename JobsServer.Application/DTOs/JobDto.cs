@@ -16,5 +16,6 @@ namespace JobsServer.Application.DTOs
         public DateTime? StartTime { get; set; }
         public DateTime? EndTime { get; set; }
         public int Progress { get; set; } = 0;
+        public DateTime CreatedTime { get; set; }
     }
 }

@@ -20,8 +20,8 @@ namespace JobsServer.Tests
             // Arrange
             var expectedJobs = new List<JobDto>
             {
-                new JobDto { Id = 1, JobName = "Job A", Progress = 50, Priority = JobPriority.Regular , Status =JobStatus.Running},
-                new JobDto { Id = 2, JobName = "Job B", Progress = 100, Priority = JobPriority.Regular, Status =JobStatus.Running }
+                new JobDto { Id = 1, JobName = "Job A", Progress = 50, Priority = JobPriority.Regular , Status =JobStatus.InProgress},
+                new JobDto { Id = 2, JobName = "Job B", Progress = 100, Priority = JobPriority.Regular, Status =JobStatus.InProgress }
             };
 
             _jobServiceMock.Setup(s => s.GetAllJobsAsync())
@@ -39,7 +39,7 @@ namespace JobsServer.Tests
         public async Task GetJobByIdAsync_ReturnsJob_WhenJobExists()
         {
             // Arrange
-            var job = new JobDto { Id = 1, JobName = "Job A", Progress = 50, Priority = JobPriority.Regular, Status = JobStatus.Running };
+            var job = new JobDto { Id = 1, JobName = "Job A", Progress = 50, Priority = JobPriority.Regular, Status = JobStatus.InProgress };
             _jobServiceMock.Setup(s => s.GetJobByIdAsync(1))
                            .ReturnsAsync(job);
             // Act

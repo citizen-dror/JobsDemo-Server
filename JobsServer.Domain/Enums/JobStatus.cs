@@ -3,8 +3,11 @@
     public enum JobStatus
     {
         Pending = 10,
-        Running = 20,
+        Scheduled = 15,
+        InProgress = 20,
         Completed = 30,
-        Failed = 40
+        Failed = 40,
+        Retrying = 50,
+        Cancelled = 60
     }
 }

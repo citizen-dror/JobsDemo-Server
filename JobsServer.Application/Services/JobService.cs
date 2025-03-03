@@ -37,6 +37,7 @@ namespace JobsServer.Application.Services
         {
             var job = _mapper.Map<Job>(createJobDto);
             job.Status = JobStatus.Pending;
+            job.CreatedTime = DateTime.UtcNow;
             await _repository.AddAsync(job);
             return _mapper.Map<JobDto>(job);
         }
@@ -47,7 +48,7 @@ namespace JobsServer.Application.Services
             if (job != null)
             {
                 job.Progress = progress;
-                job.Status = progress == 100 ? JobStatus.Completed : JobStatus.Running;
+                job.Status = progress == 100 ? JobStatus.Completed : JobStatus.InProgress;
                 await _repository.UpdateAsync(job);
                 // Notify API via JobUpdateNotifier (which will trigger SignalR)
                 await _jobUpdateNotifier.NotifyJobUpdate(job);
@@ -59,7 +60,7 @@ namespace JobsServer.Application.Services
         public async Task<bool> StopJobAsync(int id)
         {
             var job = await _repository.GetByIdAsync(id);
-            if (job == null || job.Status != JobStatus.Running) return false;
+            if (job == null || job.Status != JobStatus.InProgress) return false;
             job.Status = JobStatus.Failed;
             await _repository.UpdateAsync(job);
             return true;
@@ -68,7 +69,7 @@ namespace JobsServer.Application.Services
         public async Task<bool> RestartJobAsync(int id)
         {
             var job = await _repository.GetByIdAsync(id);
-            if (job == null || job.Status == JobStatus.Running) return false;
+            if (job == null || job.Status == JobStatus.InProgress) return false;
             job.Status = JobStatus.Pending;
             job.Progress = 0;
             await _repository.UpdateAsync(job);
