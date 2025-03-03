@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
 using JobsServer.Application.DTOs;
+using JobsServer.Application.Notifications;
 using JobsServer.Domain.Entities;
 using JobsServer.Domain.Enums;
 using JobsServer.Infrastructure.Repositories;
+using Microsoft.AspNetCore.SignalR;
 
 namespace JobsServer.Application.Services
 {
@@ -10,11 +12,13 @@ namespace JobsServer.Application.Services
     {
         private readonly IJobRepository _repository;
         private readonly IMapper _mapper;
+        private readonly IJobUpdateNotifier _jobUpdateNotifier;
 
-        public JobService(IJobRepository repository, IMapper mapper)
+        public JobService(IJobRepository repository, IMapper mapper, IJobUpdateNotifier jobUpdateNotifier)
         {
             _repository = repository;
             _mapper = mapper;
+            _jobUpdateNotifier = jobUpdateNotifier;
         }
 
         public async Task<IEnumerable<JobDto>> GetAllJobsAsync()
@@ -35,6 +39,21 @@ namespace JobsServer.Application.Services
             job.Status = JobStatus.Pending;
             await _repository.AddAsync(job);
             return _mapper.Map<JobDto>(job);
+        }
+
+        public async Task<bool> UpdateJobProgress(int id, int progress)
+        {
+            var job = await _repository.GetByIdAsync(id);
+            if (job != null)
+            {
+                job.Progress = progress;
+                job.Status = progress == 100 ? JobStatus.Completed : JobStatus.Running;
+                await _repository.UpdateAsync(job);
+                // Notify API via JobUpdateNotifier (which will trigger SignalR)
+                await _jobUpdateNotifier.NotifyJobUpdate(job);
+                return true;
+            }
+            return false;
         }
 
         public async Task<bool> StopJobAsync(int id)

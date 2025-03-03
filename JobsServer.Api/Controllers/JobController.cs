@@ -1,4 +1,5 @@
-﻿using JobsServer.Application.DTOs;
+﻿using JobsServer.Api.Models;
+using JobsServer.Application.DTOs;
 using JobsServer.Application.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -30,6 +31,13 @@ namespace JobsServer.Api.Controllers
         {
             var job = await _jobService.CreateJobAsync(jobDto);
             return CreatedAtAction(nameof(GetJob), new { id = job.Id }, job);
+        }
+
+        [HttpPost("updateProgress")]
+        public async Task<IActionResult> UpdateJobProgress([FromBody] JobProgressUpdateRequest request)
+        {
+            var res = await _jobService.UpdateJobProgress(request.JobId, request.Progress);
+            return res ? Ok() : NotFound();
         }
 
         [HttpPut("{id}/stop")]
