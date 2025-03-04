@@ -15,7 +15,8 @@ namespace JobsServer.Infrastructure
         { }
 
         public DbSet<Job> Jobs { get; set; }
-
+        public DbSet<WorkerNode> WorkerNodes { get; set; }
+        public DbSet<JobExecutionLog> JobExecutionLogs { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Job entity configuration
@@ -38,6 +39,7 @@ namespace JobsServer.Infrastructure
             // Worker node entity configuration
             modelBuilder.Entity<WorkerNode>(entity =>
             {
+                entity.ToTable("WorkerNode");
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.Status).HasConversion<int>();
@@ -50,6 +52,7 @@ namespace JobsServer.Infrastructure
             // Job execution log entity configuration
             modelBuilder.Entity<JobExecutionLog>(entity =>
             {
+                entity.ToTable("JobExecutionLog");
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.JobId).IsRequired();
                 entity.Property(e => e.LogLevel).HasConversion<int>();

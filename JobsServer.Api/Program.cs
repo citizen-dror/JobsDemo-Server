@@ -75,7 +75,9 @@ void ConfigureServices(WebApplicationBuilder builder)
     // Register Job services
     builder.Services.AddScoped<IJobRepository, JobRepository>();
     builder.Services.AddScoped<IJobService, JobService>();
-
+    builder.Services.AddScoped<IWorkerRepository, WorkerRepository>();
+    builder.Services.AddScoped<IWorkerService, WorkerService>();
+    
     // Add SignalR services
     builder.Services.AddSignalR();
 }
