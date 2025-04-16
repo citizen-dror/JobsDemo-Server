@@ -50,6 +50,30 @@ namespace JobsServer.Api.Controllers
                 return StatusCode(500, "Internal server error");
             }
         }
+
+        [HttpPost("{id}/heartbeat")]
+        public async Task<IActionResult> SendHeartbeat(string id, [FromBody] WorkerHeartbeatDto heartbeat)
+        {
+            return null;
+        }
+
+        [HttpPost("{id}/status")]
+        public async Task<IActionResult> UpdateWorkerStatus(string id, [FromBody] WorkerStatusUpdateDto statusUpdate)
+        {
+            return null;
+        }
+        [HttpPost("{id}/jobs")]
+        public async Task<ActionResult<bool>> AssignJobToWorker(string id, [FromBody] Job job)
+        {
+            return null;
+        }
+        [HttpGet("{id}/jobs")]
+        public async Task<ActionResult<IEnumerable<Job>>> GetWorkerJobs(string id)
+        {
+            return null;
+        }
+       
+
     }
 
     public class WorkerHeartbeatDto
