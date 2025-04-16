@@ -7,7 +7,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using JobQueueSystem.Core.Models;
 using JobQueueSystem.Core.Data;
 using JobQueueSystem.Core.Interfaces;
 
@@ -17,6 +16,8 @@ namespace JobQueueSystem.QueueService.Services
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+    using JobsServer.Domain.Entities;
+    using JobsServer.Domain.Enums;
     using Microsoft.EntityFrameworkCore;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;

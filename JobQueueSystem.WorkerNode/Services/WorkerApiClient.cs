@@ -1,5 +1,5 @@
 ﻿using JobQueueSystem.Core.Interfaces;
-using JobQueueSystem.Core.Models;
+using JobsServer.Domain.Entities;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
@@ -36,7 +36,7 @@ namespace JobQueueSystem.WorkerNode.Services
             _httpClient.BaseAddress = new Uri(_settings.QueueServiceUrl);
         }
 
-        public async Task<Core.Models.WorkerNode> RegisterWorker(Core.Models.WorkerNode worker)
+        public async Task<JobsServer.Domain.Entities.WorkerNode> RegisterWorker(JobsServer.Domain.Entities.WorkerNode worker)
         {
             try
             {
@@ -44,7 +44,7 @@ namespace JobQueueSystem.WorkerNode.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<Core.Models.WorkerNode>(_jsonOptions);
+                    return await response.Content.ReadFromJsonAsync<JobsServer.Domain.Entities.WorkerNode>(_jsonOptions);
                 }
 
                 _logger.LogError($"Failed to register worker. Status: {response.StatusCode}");

@@ -1,11 +1,7 @@
 ﻿using JobQueueSystem.Core.Data;
 using JobQueueSystem.Core.Interfaces;
-using JobQueueSystem.Core.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using JobsServer.Domain.Entities;
+using JobsServer.Domain.Enums;
 
 namespace JobQueueSystem.QueueService.Services
 {
@@ -29,7 +25,7 @@ namespace JobQueueSystem.QueueService.Services
             _workerApiClient = workerApiClient;
         }
 
-        public async Task DistributeJobs(List<Job> pendingJobs, List<Core.Models.WorkerNode> availableWorkers)
+        public async Task DistributeJobs(List<Job> pendingJobs, List<JobsServer.Domain.Entities.WorkerNode> availableWorkers)
         {
             if (!pendingJobs.Any() || !availableWorkers.Any())
             {
@@ -51,7 +47,7 @@ namespace JobQueueSystem.QueueService.Services
             foreach (var job in prioritizedJobs)
             {
                 // Find a worker with available capacity
-                Core.Models.WorkerNode selectedWorker = null;
+                JobsServer.Domain.Entities.WorkerNode selectedWorker = null;
 
                 // Try to find a worker with capacity starting from the ones with most available slots
                 foreach (var capacity in workersByCapacity.Keys.OrderByDescending(k => k))
@@ -67,7 +63,7 @@ namespace JobQueueSystem.QueueService.Services
                         {
                             if (!workersByCapacity.ContainsKey(newCapacity))
                             {
-                                workersByCapacity[newCapacity] = new List<Core.Models.WorkerNode>();
+                                workersByCapacity[newCapacity] = new List<JobsServer.Domain.Entities.WorkerNode>();
                             }
                             workersByCapacity[newCapacity].Add(selectedWorker);
                         }

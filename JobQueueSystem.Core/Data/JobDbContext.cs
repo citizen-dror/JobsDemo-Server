@@ -1,4 +1,4 @@
-﻿using JobQueueSystem.Core.Models;
+﻿using JobsServer.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace JobQueueSystem.Core.Data

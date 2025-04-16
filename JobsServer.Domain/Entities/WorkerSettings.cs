@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace JobQueueSystem.Core.Models
+namespace JobsServer.Domain.Entities
 {
     public class WorkerSettings
     {

@@ -1,5 +1,6 @@
 ﻿using JobQueueSystem.Core.Interfaces;
-using JobQueueSystem.Core.Models;
+using JobsServer.Domain.Entities;
+using JobsServer.Domain.Enums;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Concurrent;
@@ -41,7 +42,7 @@ namespace JobQueueSystem.WorkerNode.Services
             {
                 var apiClient = scope.ServiceProvider.GetRequiredService<IWorkerApiClient>();
                 // Register worker with job queue service
-                var worker = new JobQueueSystem.Core.Models.WorkerNode
+                var worker = new JobsServer.Domain.Entities.WorkerNode
                 {
                     Name = _settings.WorkerName,
                     ConcurrencyLimit = _settings.ConcurrencyLimit,

@@ -1,9 +1,9 @@
 using JobQueueSystem.Core.Data;
 using JobQueueSystem.Core.Interfaces;
-using JobQueueSystem.Core.Models;
 using JobQueueSystem.QueueService.Services;
 using JobQueueSystem.QueueService.SignalR;
 using JobQueueSystem.WorkerNode.Services;
+using JobsServer.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 

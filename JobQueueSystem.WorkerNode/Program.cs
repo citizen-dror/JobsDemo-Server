@@ -1,5 +1,5 @@
 using JobQueueSystem.Core.Interfaces;
-using JobQueueSystem.Core.Models;
+using JobsServer.Domain.Entities;
 using JobQueueSystem.WorkerNode.Services;
 
 var builder = Host.CreateApplicationBuilder(args);

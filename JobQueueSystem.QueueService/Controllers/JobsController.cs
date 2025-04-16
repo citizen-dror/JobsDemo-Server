@@ -1,7 +1,8 @@
 ﻿using Azure;
 using JobQueueSystem.Core.Data;
 using JobQueueSystem.Core.Interfaces;
-using JobQueueSystem.Core.Models;
+using JobsServer.Domain.Entities;
+using JobsServer.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;

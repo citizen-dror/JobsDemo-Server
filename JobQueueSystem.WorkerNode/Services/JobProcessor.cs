@@ -1,5 +1,5 @@
 ﻿using JobQueueSystem.Core.Interfaces;
-using JobQueueSystem.Core.Models;
+using JobsServer.Domain.Entities;
 using System;
 using System.Buffers.Text;
 using System.Collections;
