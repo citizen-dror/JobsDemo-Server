@@ -1,4 +1,5 @@
-﻿using JobsServer.Domain.Entities;
+﻿using JobsServer.Domain.DTOs;
+using JobsServer.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,7 @@ namespace JobsServer.Infrastructure.Repositories
         Task<WorkerNode> GetWorkerByNameAsync(string name);
         Task AddAsync(WorkerNode worker);
         Task SaveAsync();
+        Task<bool> UpdateWorkerHeartbeatAsync(string id, WorkerHeartbeatDto heartbeat);
     }
 
     public class WorkerRepository : IWorkerRepository
@@ -41,6 +43,28 @@ namespace JobsServer.Infrastructure.Repositories
         {
             return await _dbContext.WorkerNodes
                 .FirstOrDefaultAsync(w => w.Name == name && w.Status != WorkerStatus.Offline);
+        }
+
+        public async Task<bool> UpdateWorkerHeartbeatAsync(string id, WorkerHeartbeatDto heartbeat)
+        {
+            var worker = await _dbContext.WorkerNodes.FindAsync(id);
+            if (worker == null)
+                return false;
+
+            var statusChanged = worker.Status != heartbeat.Status;
+
+            worker.LastHeartbeat = heartbeat.Timestamp;
+            worker.Status = heartbeat.Status;
+            worker.ActiveJobCount = heartbeat.ActiveJobCount;
+
+            await _dbContext.SaveChangesAsync();
+
+            //if (statusChanged)
+            //{
+            //    await _jobUpdateHub.BroadcastWorkerStatusUpdates(new List<string> { worker.Id });
+            //}
+
+            return true;
         }
 
         public async Task AddAsync(WorkerNode worker)

@@ -1,4 +1,5 @@
 ﻿using JobsServer.Application.Services;
+using JobsServer.Domain.DTOs;
 using JobsServer.Domain.Entities;
 using JobsServer.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
@@ -51,10 +52,14 @@ namespace JobsServer.Api.Controllers
             }
         }
 
-        [HttpPost("{id}/heartbeat")]
-        public async Task<IActionResult> SendHeartbeat(string id, [FromBody] WorkerHeartbeatDto heartbeat)
+        [HttpPost("heartbeat")]
+        public async Task<IActionResult> SendHeartbeat([FromBody] WorkerHeartbeatDto heartbeat)
         {
-            return null;
+            var updated = await _workerService.ProcessHeartbeatAsync(heartbeat.WorkerId, heartbeat);
+            if (!updated)
+                return NotFound();
+
+            return Ok();
         }
 
         [HttpPost("{id}/status")]
@@ -74,16 +79,5 @@ namespace JobsServer.Api.Controllers
         }
        
 
-    }
-
-    public class WorkerHeartbeatDto
-    {
-        public WorkerStatus Status { get; set; }
-        public int ActiveJobCount { get; set; }
-    }
-
-    public class WorkerStatusUpdateDto
-    {
-        public WorkerStatus Status { get; set; }
     }
 }

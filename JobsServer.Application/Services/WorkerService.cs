@@ -1,4 +1,5 @@
-﻿using JobsServer.Domain.Entities;
+﻿using JobsServer.Domain.DTOs;
+using JobsServer.Domain.Entities;
 using JobsServer.Infrastructure.Repositories;
 using Microsoft.Extensions.Logging;
 using System;
@@ -13,6 +14,7 @@ namespace JobsServer.Application.Services
     {
         Task<IEnumerable<WorkerNode>> GetWorkersAsync(WorkerStatus? status);
         Task<WorkerNode> RegisterWorkerAsync(WorkerNode worker);
+        Task<bool> ProcessHeartbeatAsync(string id, WorkerHeartbeatDto heartbeat);
     }
 
     public class WorkerService : IWorkerService
@@ -65,6 +67,12 @@ namespace JobsServer.Application.Services
             _logger.LogInformation($"Registered new worker {worker.Name} ({worker.Id})");
 
             return worker;
+        }
+
+        public async Task<bool> ProcessHeartbeatAsync(string id, WorkerHeartbeatDto heartbeat)
+        {
+            var updated = await _workerRepository.UpdateWorkerHeartbeatAsync(id, heartbeat);
+            return updated;
         }
     }
 }

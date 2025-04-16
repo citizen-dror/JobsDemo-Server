@@ -1,5 +1,6 @@
 ﻿using JobQueueSystem.Core.Data;
 using JobQueueSystem.Core.Interfaces;
+using JobsServer.Domain.DTOs;
 using JobsServer.Domain.Entities;
 using JobsServer.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
@@ -196,14 +197,6 @@ namespace JobQueueSystem.QueueService.Controllers
         }
     }
 
-    public class WorkerHeartbeatDto
-    {
-        public WorkerStatus Status { get; set; }
-        public int ActiveJobCount { get; set; }
-    }
 
-    public class WorkerStatusUpdateDto
-    {
-        public WorkerStatus Status { get; set; }
-    }
+    
 }
