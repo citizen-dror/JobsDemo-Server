@@ -3,7 +3,10 @@ using JobsServer.Domain.DTOs;
 using JobsServer.Domain.Entities;
 using JobsServer.Domain.Enums;
 using JobsServer.Domain.Interfaces.Repositories;
+using JobsServer.Infrastructure.RabbitMQ;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using System.Text;
 
 namespace JobQueueSystem.QueueService.Services
 {
@@ -12,11 +15,13 @@ namespace JobQueueSystem.QueueService.Services
     public class WorkerService : IWorkerService
     {
         private readonly IWorkerRepository _workerRepository;
+        private readonly RabbitSender _rabbitSender;
         private readonly ILogger<WorkerService> _logger;
 
-        public WorkerService(IWorkerRepository workerRepository, ILogger<WorkerService> logger)
+        public WorkerService(IWorkerRepository workerRepository, RabbitSender rabbitSender, ILogger<WorkerService> logger)
         {
             _workerRepository = workerRepository;
+            _rabbitSender = rabbitSender;
             _logger = logger;
         }
         public async Task<IEnumerable<WorkerNode>> GetWorkersAsync(WorkerStatus? status)
@@ -92,13 +97,29 @@ namespace JobQueueSystem.QueueService.Services
             if (worker.ActiveJobCount >= worker.ConcurrencyLimit)
                 return AssignJobResult.AtCapacity;
 
+            // Publish job to worker's queue via RabbitMQ
+            await PublishJobToWorker(workerId, job);
             _logger.LogInformation($"Assigning job {job.Id} to worker {worker.Name} ({worker.Id})");
 
             // Job processing logic happens elsewhere
 
             return AssignJobResult.Success;
         }
+        public async Task PublishJobToWorker(string workerId, Job job)
+        {
+            try
+            {
+                var jobJson = JsonConvert.SerializeObject(job);
+                await _rabbitSender.SendMessageAsync(queueName: workerId, message: jobJson, routingKeyOverride: workerId);
 
+                _logger.LogInformation($"Published job {job.Id} to worker {workerId}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error publishing job {job.Id} to worker {workerId}");
+                throw;
+            }
+        }
         public async Task<List<Job>?> GetWorkerJobsAsync(string workerId)
         {
             var worker = await _workerRepository.GetWorkerByIdAsync(workerId);

@@ -4,6 +4,8 @@ using JobsServer.Domain.Interfaces.Repositories;
 using JobsServer.Infrastructure.Repositories;
 using JobsServer.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using JobQueueSystem.Core.Configs;
+using JobsServer.Infrastructure.RabbitMQ;
 
 var builder = WebApplication.CreateBuilder(args);
 // Configure services
@@ -73,6 +75,12 @@ void ConfigureServices(WebApplicationBuilder builder)
     // Register Worker services
     builder.Services.AddScoped<IWorkerRepository, WorkerRepository>();
     builder.Services.AddScoped<IWorkerService, WorkerService>();
+
+    // Register RabbitMQ dependencies
+    var rabbitMqConfig = builder.Configuration.GetSection("RabbitMQ").Get<RabbitMQConfig>();
+    builder.Services.AddSingleton(rabbitMqConfig);
+    builder.Services.AddSingleton<RabbitConnectionFactory>();
+    builder.Services.AddScoped<RabbitSender>();
 
     // Add SignalR services
     //builder.Services.AddSignalR();
