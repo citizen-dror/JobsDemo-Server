@@ -1,32 +1,33 @@
-using Microsoft.EntityFrameworkCore;
-using JobsServer.Application.Services;
-using JobsServer.Application.Mappings;
+using JobQueueSystem.QueueService.Services;
+using JobsServer.Application.Interfaces;
+using JobsServer.Domain.Interfaces.Repositories;
 using JobsServer.Infrastructure.Repositories;
 using JobsServer.Infrastructure;
-using JobsServer.Api.Middleware;
-using JobsServer.Api.SignalR;
-using JobsServer.Application.Notifications;
-using JobsServer.Domain.Interfaces.Repositories;
-using JobsServer.Application.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 // Configure services
 ConfigureServices(builder);
-// Build the app
+
 var app = builder.Build();
-// Configure middleware and request pipeline
-ConfigureMiddleware(app);
-// Map controllers and SignalR hubs
-MapEndpoints(app);
-try
+
+app.Logger.LogInformation("Starting workersNodes.Api in {Environment} environment", app.Environment.EnvironmentName);
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
 {
-    app.Run();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
-catch (Exception ex)
-{
-    app.Logger.LogCritical(ex, "Application startup failed");
-    throw;
-}
+// Enable CORS for specific origins
+app.UseCors("AllowSpecificOrigins");
+
+app.UseHttpsRedirection();
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();
 
 void ConfigureServices(WebApplicationBuilder builder)
 {
@@ -69,43 +70,10 @@ void ConfigureServices(WebApplicationBuilder builder)
     // Infrastructure
     builder.Services.AddInfrastructure(builder.Configuration);
 
-    // Register AutoMapper
-    builder.Services.AddAutoMapper(typeof(JobProfile));
-    // Register Notifier
-    builder.Services.AddSingleton<IJobUpdateNotifier, JobUpdateNotifier>();
-
-    // Register Job services
-    builder.Services.AddScoped<IJobRepository, JobRepository>();
-    builder.Services.AddScoped<IJobService, JobService>();
+    // Register Worker services
     builder.Services.AddScoped<IWorkerRepository, WorkerRepository>();
+    builder.Services.AddScoped<IWorkerService, WorkerService>();
 
-    
     // Add SignalR services
-    builder.Services.AddSignalR();
-}
-
-void ConfigureMiddleware(WebApplication app)
-{
-    app.Logger.LogInformation("Starting application in {Environment} environment", app.Environment.EnvironmentName);
-    // Configure the HTTP request pipeline
-    if (app.Environment.IsDevelopment())
-    {
-        app.UseSwagger();
-        app.UseSwaggerUI();
-    }
-    // Enable CORS for specific origins
-    app.UseCors("AllowSpecificOrigins");
-
-    app.UseHttpsRedirection();
-
-    // Register the ApiLogger middleware
-    app.UseMiddleware<ApiLogger>();
-    app.UseAuthorization();
-}
-
-void MapEndpoints(WebApplication app)
-{
-    app.MapControllers();
-    // Map SignalR hubs
-    app.MapHub<JobHub>("/jobHub");
+    //builder.Services.AddSignalR();
 }

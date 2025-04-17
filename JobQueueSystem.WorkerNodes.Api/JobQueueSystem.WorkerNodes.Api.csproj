@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\JobQueueSystem.Core\JobQueueSystem.Core.csproj" />
+    <ProjectReference Include="..\JobQueueSystem.QueueService\JobQueueSystem.QueueService.csproj" />
+    <ProjectReference Include="..\JobsServer.Domain\JobsServer.Domain.csproj" />
+    <ProjectReference Include="..\JobsServer.Infrastructure\JobsServer.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

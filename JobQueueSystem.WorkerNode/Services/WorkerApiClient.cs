@@ -10,7 +10,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace JobQueueSystem.WorkerNode.Services
+namespace JobQueueSystem.WorkerNodes.Services
 {
     //communication between the worker nodes and the job queue service
     public class WorkerApiClient : IWorkerApiClient
@@ -36,7 +36,7 @@ namespace JobQueueSystem.WorkerNode.Services
             _httpClient.BaseAddress = new Uri(_settings.QueueServiceUrl);
         }
 
-        public async Task<JobsServer.Domain.Entities.WorkerNode> RegisterWorker(JobsServer.Domain.Entities.WorkerNode worker)
+        public async Task<WorkerNode> RegisterWorker(WorkerNode worker)
         {
             try
             {
@@ -44,7 +44,7 @@ namespace JobQueueSystem.WorkerNode.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<JobsServer.Domain.Entities.WorkerNode>(_jsonOptions);
+                    return await response.Content.ReadFromJsonAsync<WorkerNode>(_jsonOptions);
                 }
 
                 _logger.LogError($"Failed to register worker. Status: {response.StatusCode}");

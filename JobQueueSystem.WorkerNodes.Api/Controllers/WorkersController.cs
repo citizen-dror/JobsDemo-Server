@@ -4,7 +4,7 @@ using JobsServer.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 using JobsServer.Application.Interfaces;
 
-namespace JobsServer.Api.Controllers
+namespace JobQueueSystem.WorkerNodes.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

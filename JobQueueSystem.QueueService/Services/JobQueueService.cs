@@ -42,8 +42,8 @@ namespace JobQueueSystem.QueueService.Services
         {
             _logger.LogInformation("Job Queue Service starting");
 
-            // Timer for processing the job queue (every 5 seconds)
-            _queueProcessorTimer = new Timer(ProcessQueue, null, TimeSpan.Zero, TimeSpan.FromSeconds(5));
+            // Timer for processing the job queue (every 10seconds)
+            _queueProcessorTimer = new Timer(ProcessQueue, null, TimeSpan.Zero, TimeSpan.FromSeconds(10));
 
             // Timer for checking worker heartbeats (every 30 seconds)
             _heartbeatTimer = new Timer(CheckWorkerHeartbeats, null, TimeSpan.Zero, TimeSpan.FromSeconds(30));

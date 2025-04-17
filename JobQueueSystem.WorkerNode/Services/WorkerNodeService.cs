@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Concurrent;
 
-namespace JobQueueSystem.WorkerNode.Services
+namespace JobQueueSystem.WorkerNodes.Services
 {
     public class WorkerNodeService : BackgroundService
     {
@@ -74,7 +74,7 @@ namespace JobQueueSystem.WorkerNode.Services
                 _logger.LogError(ex, "Error sending heartbeat");
             }
         }
-     
+
         // This method would be called by the API controller when jobs are assigned
         public async Task<bool> AcceptJob(Job job)
         {
@@ -84,7 +84,6 @@ namespace JobQueueSystem.WorkerNode.Services
                 return false;
             }
 
-            // Add job to active jobs
             if (!_activeJobs.TryAdd(job.Id, job))
             {
                 _logger.LogWarning($"Job {job.Id} is already being processed by this worker");
@@ -92,38 +91,8 @@ namespace JobQueueSystem.WorkerNode.Services
             }
 
             UpdateWorkerStatus();
-
             // Process job asynchronously
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    // Process the job
-                    await ProcessJob(job);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, $"Error processing job {job.Id}");
-
-                    // Update job status to failed
-                    job.Status = job.RetryCount < job.MaxRetries ? JobStatus.Retrying : JobStatus.Failed;
-                    job.ErrorMessage = ex.Message;
-                    job.EndTime = DateTime.UtcNow;
-                    using (var scope = _scopeFactory.CreateScope())
-                    {
-                        var apiClient = scope.ServiceProvider.GetRequiredService<IWorkerApiClient>();
-                        // Notify job queue service
-                        await apiClient.UpdateJobStatus(job);
-                    }
-                }
-                finally
-                {
-                    // Remove job from active jobs
-                    _activeJobs.TryRemove(job.Id, out _);
-                    UpdateWorkerStatus();
-                }
-            });
-
+            StartBackgroundJobExecution(job);
             return true;
         }
 
@@ -167,6 +136,38 @@ namespace JobQueueSystem.WorkerNode.Services
                 // Notify job queue service of completion
                 await apiClient.UpdateJobStatus(job);
             }
+        }
+
+        private void StartBackgroundJobExecution(Job job)
+        {
+            _ = Task.Run(() => ExecuteJobInternalAsync(job));
+        }
+        private async Task ExecuteJobInternalAsync(Job job)
+        {
+            try
+            {
+                await ProcessJob(job);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error processing job {job.Id}");
+                await HandleJobFailure(job, ex);
+            }
+            finally
+            {
+                _activeJobs.TryRemove(job.Id, out _);
+                UpdateWorkerStatus();
+            }
+        }
+        private async Task HandleJobFailure(Job job, Exception ex)
+        {
+            job.Status = job.RetryCount < job.MaxRetries ? JobStatus.Retrying : JobStatus.Failed;
+            job.ErrorMessage = ex.Message;
+            job.EndTime = DateTime.UtcNow;
+
+            using var scope = _scopeFactory.CreateScope();
+            var apiClient = scope.ServiceProvider.GetRequiredService<IWorkerApiClient>();
+            await apiClient.UpdateJobStatus(job);
         }
 
         private void UpdateWorkerStatus()

@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-namespace JobQueueSystem.WorkerNode.Services
+namespace JobQueueSystem.WorkerNodes.Services
 {
     /// <summary>
     /// Main job processor that executes different types of jobs based on JobType 

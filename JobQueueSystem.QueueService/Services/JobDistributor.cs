@@ -25,87 +25,99 @@ namespace JobQueueSystem.QueueService.Services
             _workerApiClient = workerApiClient;
         }
 
-        public async Task DistributeJobs(List<Job> pendingJobs, List<JobsServer.Domain.Entities.WorkerNode> availableWorkers)
+        public async Task DistributeJobs(List<Job> pendingJobs, List<WorkerNode> availableWorkers)
         {
             if (!pendingJobs.Any() || !availableWorkers.Any())
-            {
                 return;
-            }
 
-            // Group workers by how many more jobs they can handle
-            var workersByCapacity = availableWorkers
-                .OrderBy(w => w.ActiveJobCount)
-                .GroupBy(w => w.ConcurrencyLimit - w.ActiveJobCount)
-                .ToDictionary(g => g.Key, g => g.ToList());
-
-            // Sort jobs by priority (highest first)
-            var prioritizedJobs = pendingJobs
-                .OrderByDescending(j => j.Priority)
-                .ThenBy(j => j.ScheduledTime ?? DateTime.MinValue)
-                .ToList();
+            var workersByCapacity = GroupWorkersByAvailableCapacity(availableWorkers);
+            var prioritizedJobs = GetPrioritizedJobs(pendingJobs);
 
             foreach (var job in prioritizedJobs)
             {
-                // Find a worker with available capacity
-                JobsServer.Domain.Entities.WorkerNode selectedWorker = null;
-
-                // Try to find a worker with capacity starting from the ones with most available slots
-                foreach (var capacity in workersByCapacity.Keys.OrderByDescending(k => k))
-                {
-                    if (workersByCapacity[capacity].Any())
-                    {
-                        selectedWorker = workersByCapacity[capacity].First();
-
-                        // Move worker to appropriate capacity group or remove if full
-                        workersByCapacity[capacity].Remove(selectedWorker);
-                        int newCapacity = capacity - 1;
-                        if (newCapacity > 0)
-                        {
-                            if (!workersByCapacity.ContainsKey(newCapacity))
-                            {
-                                workersByCapacity[newCapacity] = new List<JobsServer.Domain.Entities.WorkerNode>();
-                            }
-                            workersByCapacity[newCapacity].Add(selectedWorker);
-                        }
-
-                        break;
-                    }
-                }
-
+                var selectedWorker = SelectWorkerWithCapacity(workersByCapacity);
                 if (selectedWorker == null)
                 {
-                    // No workers available with capacity
                     _logger.LogInformation($"No workers available with capacity for job {job.Id}");
                     break;
                 }
 
-                // Assign the job to the worker
-                job.Status = JobStatus.InProgress;
-                job.AssignedWorker = selectedWorker.Id;
-                job.StartTime = DateTime.UtcNow;
-
-                selectedWorker.Status = WorkerStatus.Busy;
-                selectedWorker.ActiveJobCount++;
-                selectedWorker.CurrentJobId = job.Id;
+                PrepareJobAssignment(job, selectedWorker);
 
                 _logger.LogInformation($"Assigning job {job.Id} ({job.JobName}) to worker {selectedWorker.Name}");
 
-                // Send the job to the worker
-                bool assignmentSuccessful = await _workerApiClient.AssignJobToWorker(selectedWorker.Id, job);
-
+                var assignmentSuccessful = await _workerApiClient.AssignJobToWorker(selectedWorker.Id, job);
                 if (!assignmentSuccessful)
                 {
-                    _logger.LogWarning($"Failed to assign job {job.Id} to worker {selectedWorker.Name}. Will try again later.");
-                    job.Status = JobStatus.Pending;
-                    job.AssignedWorker = null;
-                    job.StartTime = null;
-
-                    selectedWorker.ActiveJobCount--;
-                    selectedWorker.Status = selectedWorker.ActiveJobCount > 0 ? WorkerStatus.Busy : WorkerStatus.Idle;
+                    HandleAssignmentFailure(job, selectedWorker);
                 }
             }
 
             await _dbContext.SaveChangesAsync();
         }
+
+        private Dictionary<int, List<WorkerNode>> GroupWorkersByAvailableCapacity(List<WorkerNode> workers)
+        {
+            return workers
+                .OrderBy(w => w.ActiveJobCount)
+                .GroupBy(w => w.ConcurrencyLimit - w.ActiveJobCount)
+                .ToDictionary(g => g.Key, g => g.ToList());
+        }
+
+        private List<Job> GetPrioritizedJobs(List<Job> jobs)
+        {
+            return jobs
+                .OrderByDescending(j => j.Priority)
+                .ThenBy(j => j.ScheduledTime ?? DateTime.MinValue)
+                .ToList();
+        }
+
+        private WorkerNode SelectWorkerWithCapacity(Dictionary<int, List<WorkerNode>> workersByCapacity)
+        {
+            foreach (var capacity in workersByCapacity.Keys.OrderByDescending(k => k))
+            {
+                if (workersByCapacity[capacity].Any())
+                {
+                    var worker = workersByCapacity[capacity].First();
+                    workersByCapacity[capacity].Remove(worker);
+
+                    var newCapacity = capacity - 1;
+                    if (newCapacity > 0)
+                    {
+                        if (!workersByCapacity.ContainsKey(newCapacity))
+                            workersByCapacity[newCapacity] = new List<WorkerNode>();
+                        workersByCapacity[newCapacity].Add(worker);
+                    }
+
+                    return worker;
+                }
+            }
+
+            return null;
+        }
+
+        private void PrepareJobAssignment(Job job, WorkerNode worker)
+        {
+            job.Status = JobStatus.InProgress;
+            job.AssignedWorker = worker.Id;
+            job.StartTime = DateTime.UtcNow;
+
+            worker.Status = WorkerStatus.Busy;
+            worker.ActiveJobCount++;
+            worker.CurrentJobId = job.Id;
+        }
+
+        private void HandleAssignmentFailure(Job job, WorkerNode worker)
+        {
+            _logger.LogWarning($"Failed to assign job {job.Id} to worker {worker.Name}. Will try again later.");
+
+            job.Status = JobStatus.Pending;
+            job.AssignedWorker = null;
+            job.StartTime = null;
+
+            worker.ActiveJobCount--;
+            worker.Status = worker.ActiveJobCount > 0 ? WorkerStatus.Busy : WorkerStatus.Idle;
+        }
+        
     }
 }
