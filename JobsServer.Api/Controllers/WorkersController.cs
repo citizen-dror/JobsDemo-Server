@@ -1,9 +1,8 @@
-﻿using JobsServer.Application.Services;
-using JobsServer.Domain.DTOs;
+﻿using JobsServer.Domain.DTOs;
 using JobsServer.Domain.Entities;
 using JobsServer.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using JobsServer.Application.Interfaces;
 
 namespace JobsServer.Api.Controllers
 {
@@ -62,22 +61,41 @@ namespace JobsServer.Api.Controllers
             return Ok();
         }
 
+
         [HttpPost("{id}/status")]
         public async Task<IActionResult> UpdateWorkerStatus(string id, [FromBody] WorkerStatusUpdateDto statusUpdate)
         {
-            return null;
+            var success = await _workerService.UpdateWorkerStatusAsync(id, statusUpdate.Status);
+            if (!success)
+                return NotFound();
+
+            return Ok();
         }
+
         [HttpPost("{id}/jobs")]
         public async Task<ActionResult<bool>> AssignJobToWorker(string id, [FromBody] Job job)
         {
-            return null;
+            var result = await _workerService.AssignJobToWorkerAsync(id, job);
+
+            return result switch
+            {
+                AssignJobResult.Success => Ok(true),
+                AssignJobResult.NotFound => NotFound($"Worker with ID {id} not found"),
+                AssignJobResult.Offline => BadRequest("Cannot assign job to offline worker"),
+                AssignJobResult.AtCapacity => BadRequest("Worker is at capacity"),
+                _ => StatusCode(500, "Unexpected error")
+            };
         }
+
         [HttpGet("{id}/jobs")]
         public async Task<ActionResult<IEnumerable<Job>>> GetWorkerJobs(string id)
         {
-            return null;
+            var jobs = await _workerService.GetWorkerJobsAsync(id);
+            if (jobs == null)
+                return NotFound();
+
+            return Ok(jobs);
         }
-       
 
     }
 }

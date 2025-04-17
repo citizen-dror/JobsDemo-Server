@@ -1,10 +1,10 @@
 ﻿using AutoMapper;
 using JobsServer.Application.DTOs;
+using JobsServer.Application.Interfaces;
 using JobsServer.Application.Notifications;
 using JobsServer.Domain.Entities;
 using JobsServer.Domain.Enums;
-using JobsServer.Infrastructure.Repositories;
-using Microsoft.AspNetCore.SignalR;
+using JobsServer.Domain.Interfaces.Repositories;
 
 namespace JobsServer.Application.Services
 {

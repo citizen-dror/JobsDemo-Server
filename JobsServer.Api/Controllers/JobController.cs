@@ -1,6 +1,6 @@
 ﻿using JobsServer.Api.Models;
 using JobsServer.Application.DTOs;
-using JobsServer.Application.Services;
+using JobsServer.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JobsServer.Api.Controllers

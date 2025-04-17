@@ -1,5 +1,5 @@
 ﻿using JobsServer.Application.DTOs;
-using JobsServer.Application.Services;
+using JobsServer.Application.Interfaces;
 using JobsServer.Domain.Enums;
 using Moq;
 

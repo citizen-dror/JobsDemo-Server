@@ -1,4 +1,5 @@
 ﻿using JobsServer.Domain.Entities;
+using JobsServer.Domain.Interfaces.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 

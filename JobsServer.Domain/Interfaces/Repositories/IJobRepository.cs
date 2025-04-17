@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace JobsServer.Infrastructure.Repositories
+namespace JobsServer.Domain.Interfaces.Repositories
 {
     public interface IJobRepository
     {

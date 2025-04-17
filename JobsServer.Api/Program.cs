@@ -6,6 +6,8 @@ using JobsServer.Infrastructure;
 using JobsServer.Api.Middleware;
 using JobsServer.Api.SignalR;
 using JobsServer.Application.Notifications;
+using JobsServer.Domain.Interfaces.Repositories;
+using JobsServer.Application.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 // Configure services

@@ -1,21 +1,13 @@
-﻿using JobsServer.Domain.DTOs;
+﻿using JobsServer.Application.Interfaces;
+using JobsServer.Domain.DTOs;
 using JobsServer.Domain.Entities;
-using JobsServer.Infrastructure.Repositories;
+using JobsServer.Domain.Enums;
+using JobsServer.Domain.Interfaces.Repositories;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace JobsServer.Application.Services
 {
-    public interface IWorkerService
-    {
-        Task<IEnumerable<WorkerNode>> GetWorkersAsync(WorkerStatus? status);
-        Task<WorkerNode> RegisterWorkerAsync(WorkerNode worker);
-        Task<bool> ProcessHeartbeatAsync(string id, WorkerHeartbeatDto heartbeat);
-    }
+ 
 
     public class WorkerService : IWorkerService
     {
@@ -69,10 +61,51 @@ namespace JobsServer.Application.Services
             return worker;
         }
 
-        public async Task<bool> ProcessHeartbeatAsync(string id, WorkerHeartbeatDto heartbeat)
+        public async Task<bool> ProcessHeartbeatAsync(string workerId, WorkerHeartbeatDto heartbeat)
         {
-            var updated = await _workerRepository.UpdateWorkerHeartbeatAsync(id, heartbeat);
+            var updated = await _workerRepository.UpdateWorkerHeartbeatAsync(workerId, heartbeat);
             return updated;
+        }
+
+        public async Task<bool> UpdateWorkerStatusAsync(string id, WorkerStatus newStatus)
+        {
+            var worker = await _workerRepository.GetWorkerByIdAsync(id);
+            if (worker == null)
+                return false;
+
+            worker.Status = newStatus;
+            worker.LastHeartbeat = DateTime.UtcNow;
+
+            await _workerRepository.SaveAsync();
+            //await _jobUpdateHub.BroadcastWorkerStatusUpdates(new List<string> { worker.Id });
+            return true;
+        }
+        public async Task<AssignJobResult> AssignJobToWorkerAsync(string workerId, Job job)
+        {
+            var worker = await _workerRepository.GetWorkerByIdAsync(workerId);
+            if (worker == null)
+                return AssignJobResult.NotFound;
+
+            if (worker.Status == WorkerStatus.Offline)
+                return AssignJobResult.Offline;
+
+            if (worker.ActiveJobCount >= worker.ConcurrencyLimit)
+                return AssignJobResult.AtCapacity;
+
+            _logger.LogInformation($"Assigning job {job.Id} to worker {worker.Name} ({worker.Id})");
+
+            // Job processing logic happens elsewhere
+
+            return AssignJobResult.Success;
+        }
+
+        public async Task<List<Job>?> GetWorkerJobsAsync(string workerId)
+        {
+            var worker = await _workerRepository.GetWorkerByIdAsync(workerId);
+            if (worker == null)
+                return null;
+
+            return await _workerRepository.GetWorkerJobsAsync(workerId);
         }
     }
 }

@@ -1,22 +1,11 @@
 ﻿using JobsServer.Domain.DTOs;
 using JobsServer.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using JobsServer.Domain.Interfaces.Repositories;
+using JobsServer.Domain.Enums;
 
 namespace JobsServer.Infrastructure.Repositories
 {
-    public interface IWorkerRepository
-    {
-        Task<IEnumerable<WorkerNode>> GetWorkersByStatusAsync(WorkerStatus? status);
-        Task<WorkerNode> GetWorkerByNameAsync(string name);
-        Task AddAsync(WorkerNode worker);
-        Task SaveAsync();
-        Task<bool> UpdateWorkerHeartbeatAsync(string id, WorkerHeartbeatDto heartbeat);
-    }
 
     public class WorkerRepository : IWorkerRepository
     {
@@ -43,6 +32,18 @@ namespace JobsServer.Infrastructure.Repositories
         {
             return await _dbContext.WorkerNodes
                 .FirstOrDefaultAsync(w => w.Name == name && w.Status != WorkerStatus.Offline);
+        }
+
+        public async Task<WorkerNode?> GetWorkerByIdAsync(string id)
+        {
+            return await _dbContext.WorkerNodes.FindAsync(id);
+        }
+
+        public async Task<List<Job>> GetWorkerJobsAsync(string workerId)
+        {
+            return await _dbContext.Jobs
+                .Where(j => j.AssignedWorker == workerId && j.Status == JobStatus.InProgress)
+                .ToListAsync();
         }
 
         public async Task<bool> UpdateWorkerHeartbeatAsync(string id, WorkerHeartbeatDto heartbeat)

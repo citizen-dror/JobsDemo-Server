@@ -1,6 +1,6 @@
 ﻿using JobsServer.Application.DTOs;
 
-namespace JobsServer.Application.Services
+namespace JobsServer.Application.Interfaces
 {
     public interface IJobService
     {

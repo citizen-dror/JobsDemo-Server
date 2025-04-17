@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\JobsServer.Application\JobsServer.Application.csproj" />
+    <ProjectReference Include="..\JobsServer.Infrastructure\JobsServer.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
