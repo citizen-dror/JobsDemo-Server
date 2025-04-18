@@ -1,8 +1,8 @@
-﻿using JobsServer.Domain.DTOs;
+﻿using JobQueueSystem.Core.DTOs;
+using JobQueueSystem.Core.Enums;
 using JobsServer.Domain.Entities;
-using JobsServer.Domain.Enums;
+using JobsServer.Domain.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
-using JobsServer.Application.Interfaces;
 
 namespace JobQueueSystem.WorkerNodes.Api.Controllers
 {
@@ -11,11 +11,13 @@ namespace JobQueueSystem.WorkerNodes.Api.Controllers
     public class WorkerController : ControllerBase
     {
         private readonly IWorkerService _workerService;
+        private readonly IJobService _jobService;
         private readonly ILogger<WorkerController> _logger;
 
-        public WorkerController(IWorkerService workerService, ILogger<WorkerController> logger)
+        public WorkerController(IWorkerService workerService, IJobService jobService, ILogger<WorkerController> logger)
         {
             _workerService = workerService;
+            _jobService = jobService;
             _logger = logger;
         }
 
@@ -61,7 +63,6 @@ namespace JobQueueSystem.WorkerNodes.Api.Controllers
             return Ok();
         }
 
-
         [HttpPost("{id}/status")]
         public async Task<IActionResult> UpdateWorkerStatus(string id, [FromBody] WorkerStatusUpdateDto statusUpdate)
         {
@@ -95,6 +96,13 @@ namespace JobQueueSystem.WorkerNodes.Api.Controllers
                 return NotFound();
 
             return Ok(jobs);
+        }
+
+        [HttpPost("updateProgress")]
+        public async Task<IActionResult> UpdateJobProgress([FromBody] JobProgressUpdateRequest request)
+        {
+            var res = await _jobService.UpdateJobProgress(request.JobId, request.Progress);
+            return res ? Ok() : NotFound();
         }
 
     }

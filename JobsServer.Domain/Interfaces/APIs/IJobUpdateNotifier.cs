@@ -1,6 +1,6 @@
 ﻿using JobsServer.Domain.Entities;
 
-namespace JobsServer.Application.Notifications
+namespace JobsServer.Domain.Interfaces.APIs
 {
     public interface IJobUpdateNotifier
     {

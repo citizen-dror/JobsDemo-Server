@@ -1,5 +1,5 @@
 ﻿
-namespace JobsServer.Domain.Enums
+namespace JobQueueSystem.Core.Enums
 {
     public enum JobPriority
     {

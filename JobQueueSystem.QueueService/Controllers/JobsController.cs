@@ -1,8 +1,4 @@
-﻿using Azure;
-using JobQueueSystem.Core.Data;
-using JobQueueSystem.Core.Interfaces;
-using JobsServer.Domain.Entities;
-using JobsServer.Domain.Enums;
+﻿using JobsServer.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -10,6 +6,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using JobsServer.Infrastructure;
+using JobQueueSystem.Core.Enums;
+using JobsServer.Domain.Interfaces.APIs;
 
 namespace JobQueueSystem.QueueService.Controllers
 {
@@ -20,12 +19,12 @@ namespace JobQueueSystem.QueueService.Controllers
     [Route("api/[controller]")]
     public class JobsController : ControllerBase
     {
-        private readonly JobDbContext _dbContext;
+        private readonly ApplicationDbContext _dbContext;
         private readonly ILogger<JobsController> _logger;
         private readonly IJobUpdateHub _jobUpdateHub;
 
         public JobsController(
-            JobDbContext dbContext,
+            ApplicationDbContext dbContext,
             ILogger<JobsController> logger,
             IJobUpdateHub jobUpdateHub
             )

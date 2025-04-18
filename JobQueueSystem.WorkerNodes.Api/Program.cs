@@ -1,11 +1,15 @@
 using JobQueueSystem.QueueService.Services;
-using JobsServer.Application.Interfaces;
+using JobsServer.Domain.Interfaces.Services;
 using JobsServer.Domain.Interfaces.Repositories;
+using JobsServer.Domain.Interfaces.APIs;
 using JobsServer.Infrastructure.Repositories;
 using JobsServer.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using JobQueueSystem.Core.Configs;
 using JobsServer.Infrastructure.RabbitMQ;
+using JobsServer.Application.Services;
+using JobsServer.Application.Mappings;
+using JobQueueSystem.WorkerNodes.Api.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 // Configure services
@@ -28,6 +32,8 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+// Map SignalR hubs
+app.MapHub<JobHub>("/jobHub");
 
 app.Run();
 
@@ -72,9 +78,16 @@ void ConfigureServices(WebApplicationBuilder builder)
     // Infrastructure
     builder.Services.AddInfrastructure(builder.Configuration);
 
+    // Register AutoMapper
+    builder.Services.AddAutoMapper(typeof(JobProfile));
+    // Register Notifier
+    builder.Services.AddSingleton<IJobUpdateNotifier, JobUpdateNotifier>();
+
     // Register Worker services
     builder.Services.AddScoped<IWorkerRepository, WorkerRepository>();
     builder.Services.AddScoped<IWorkerService, WorkerService>();
+    builder.Services.AddScoped<IJobRepository, JobRepository>();
+    builder.Services.AddScoped<IJobService, JobService>();
 
     // Register RabbitMQ dependencies
     var rabbitMqConfig = builder.Configuration.GetSection("RabbitMQ").Get<RabbitMQConfig>();
@@ -83,5 +96,5 @@ void ConfigureServices(WebApplicationBuilder builder)
     builder.Services.AddScoped<RabbitSender>();
 
     // Add SignalR services
-    //builder.Services.AddSignalR();
+    builder.Services.AddSignalR();
 }

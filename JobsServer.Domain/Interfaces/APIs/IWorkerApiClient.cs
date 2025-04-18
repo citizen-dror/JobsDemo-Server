@@ -1,6 +1,7 @@
 ﻿using JobsServer.Domain.Entities;
+using JobQueueSystem.Core.Enums;
 
-namespace JobQueueSystem.Core.Interfaces
+namespace JobsServer.Domain.Interfaces.APIs
 {
     //communication between the worker nodes and the job queue service
     public interface IWorkerApiClient

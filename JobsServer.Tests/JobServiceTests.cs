@@ -1,6 +1,6 @@
-﻿using JobsServer.Application.DTOs;
-using JobsServer.Application.Interfaces;
-using JobsServer.Domain.Enums;
+﻿using JobQueueSystem.Core.DTOs;
+using JobQueueSystem.Core.Enums;
+using JobsServer.Domain.Interfaces.Services;
 using Moq;
 
 namespace JobsServer.Tests

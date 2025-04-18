@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using JobsServer.Application.DTOs;
+using JobQueueSystem.Core.DTOs;
 using JobsServer.Domain.Entities;
 
 namespace JobsServer.Application.Mappings

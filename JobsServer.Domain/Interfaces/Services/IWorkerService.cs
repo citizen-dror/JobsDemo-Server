@@ -1,13 +1,8 @@
-﻿using JobsServer.Domain.DTOs;
+﻿using JobQueueSystem.Core.DTOs;
+using JobQueueSystem.Core.Enums;
 using JobsServer.Domain.Entities;
-using JobsServer.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace JobsServer.Application.Interfaces
+namespace JobsServer.Domain.Interfaces.Services
 {
     public interface IWorkerService
     {

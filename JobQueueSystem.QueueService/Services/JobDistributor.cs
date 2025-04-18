@@ -1,7 +1,7 @@
-﻿using JobQueueSystem.Core.Data;
-using JobQueueSystem.Core.Interfaces;
+﻿using JobQueueSystem.Core.Enums;
 using JobsServer.Domain.Entities;
-using JobsServer.Domain.Enums;
+using JobsServer.Domain.Interfaces.APIs;
+using JobsServer.Infrastructure;
 
 namespace JobQueueSystem.QueueService.Services
 {
@@ -11,12 +11,12 @@ namespace JobQueueSystem.QueueService.Services
     public class JobDistributor
     {
         private readonly ILogger<JobDistributor> _logger;
-        private readonly JobDbContext _dbContext;
+        private readonly ApplicationDbContext _dbContext;
         private readonly IWorkerApiClient _workerApiClient;
 
         public JobDistributor(
             ILogger<JobDistributor> logger,
-            JobDbContext dbContext,
+            ApplicationDbContext dbContext,
             IWorkerApiClient workerApiClient
             )
         {

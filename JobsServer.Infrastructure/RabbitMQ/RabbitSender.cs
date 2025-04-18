@@ -16,7 +16,7 @@ namespace JobsServer.Infrastructure.RabbitMQ
 
         // Constructor with Dependency Injection for Logger and configurable values
         public RabbitSender(RabbitConnectionFactory connectionFactory, ILogger<RabbitSender> logger,
-            string exchangeName = "JobWorker1", string routingKey = "job-rkey1", bool durable = false, bool exclusive = false, bool autoDelete = false)
+            string exchangeName = "worker.jobs", string routingKey = "job-rkey1", bool durable = true, bool exclusive = false, bool autoDelete = false)
         {
             _connectionFactory = connectionFactory;
             _logger = logger;

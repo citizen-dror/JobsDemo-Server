@@ -1,4 +1,4 @@
-﻿using JobsServer.Domain.Enums;
+﻿using JobQueueSystem.Core.Enums;
 
 namespace JobsServer.Domain.Entities
 {

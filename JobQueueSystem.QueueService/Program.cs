@@ -1,11 +1,13 @@
-using JobQueueSystem.Core.Data;
-using JobQueueSystem.Core.Interfaces;
+using JobsServer.Domain.Interfaces.Services;
+using JobsServer.Domain.Interfaces.APIs;
 using JobQueueSystem.QueueService.Services;
 using JobQueueSystem.QueueService.SignalR;
 using JobQueueSystem.WorkerNodes.Services;
 using JobsServer.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
+using JobsServer.Infrastructure;
+
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -15,7 +17,7 @@ builder.Services.AddSingleton<Microsoft.AspNetCore.Hosting.IApplicationLifetime>
 
 
 // Add DbContext with connection string from appsettings.json
-builder.Services.AddDbContext<JobDbContext>(options =>
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("JobDbConnection"))
 );
 

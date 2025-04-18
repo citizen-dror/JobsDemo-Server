@@ -1,11 +1,6 @@
-﻿using JobsServer.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using JobQueueSystem.Core.Enums;
 
-namespace JobsServer.Domain.DTOs
+namespace JobQueueSystem.Core.DTOs
 {
     public class WorkerHeartbeatDto
     {

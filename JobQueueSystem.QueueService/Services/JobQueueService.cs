@@ -1,27 +1,10 @@
-﻿using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using JobQueueSystem.Core.Data;
-using JobQueueSystem.Core.Interfaces;
+﻿using Microsoft.EntityFrameworkCore;
+using JobQueueSystem.Core.Enums;
+using JobsServer.Infrastructure;
+using JobsServer.Domain.Interfaces.APIs;
 
 namespace JobQueueSystem.QueueService.Services
 {
-    using System;
-    using System.Linq;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using JobsServer.Domain.Entities;
-    using JobsServer.Domain.Enums;
-    using Microsoft.EntityFrameworkCore;
-    using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.Hosting;
-    using Microsoft.Extensions.Logging;
 
     public class JobQueueService : BackgroundService
     {
@@ -56,7 +39,7 @@ namespace JobQueueSystem.QueueService.Services
             try
             {
                 using var scope = _scopeFactory.CreateScope();
-                var dbContext = scope.ServiceProvider.GetRequiredService<JobDbContext>();
+                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 var jobUpdateHub = scope.ServiceProvider.GetRequiredService<IJobUpdateHub>();
 
                 // Get all available workers
@@ -106,7 +89,7 @@ namespace JobQueueSystem.QueueService.Services
             try
             {
                 using var scope = _scopeFactory.CreateScope();
-                var dbContext = scope.ServiceProvider.GetRequiredService<JobDbContext>();
+                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 var jobUpdateHub = scope.ServiceProvider.GetRequiredService<IJobUpdateHub>();
 
                 // Find workers with stale heartbeats (more than 2 minutes old)

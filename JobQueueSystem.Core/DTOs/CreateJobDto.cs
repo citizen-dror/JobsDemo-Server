@@ -1,12 +1,10 @@
-﻿using JobsServer.Domain.Enums;
-using System;
-using System.Collections.Generic;
+﻿using JobQueueSystem.Core.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace JobsServer.Application.DTOs
+namespace JobQueueSystem.Core.DTOs
 {
     public class CreateJobDto
     {

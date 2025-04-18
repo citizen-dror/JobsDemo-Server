@@ -1,8 +1,8 @@
-﻿using JobsServer.Domain.DTOs;
+﻿using Microsoft.EntityFrameworkCore;
+using JobQueueSystem.Core.DTOs;
+using JobQueueSystem.Core.Enums;
 using JobsServer.Domain.Entities;
-using Microsoft.EntityFrameworkCore;
 using JobsServer.Domain.Interfaces.Repositories;
-using JobsServer.Domain.Enums;
 
 namespace JobsServer.Infrastructure.Repositories
 {

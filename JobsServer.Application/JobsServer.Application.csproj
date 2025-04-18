@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\JobQueueSystem.Core\JobQueueSystem.Core.csproj" />
     <ProjectReference Include="..\JobsServer.Domain\JobsServer.Domain.csproj" />
   </ItemGroup>
 

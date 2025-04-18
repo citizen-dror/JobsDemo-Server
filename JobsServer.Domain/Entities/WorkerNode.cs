@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using JobQueueSystem.Core.Enums;
 
 namespace JobsServer.Domain.Entities
 {
@@ -17,10 +13,5 @@ namespace JobsServer.Domain.Entities
         public int ActiveJobCount { get; set; } = 0;
     }
 
-    public enum WorkerStatus
-    {
-        Idle = 0,
-        Busy = 1,
-        Offline = 2
-    }
+
 }

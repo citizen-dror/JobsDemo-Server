@@ -1,14 +1,6 @@
-﻿using JobQueueSystem.Core.Interfaces;
+﻿using JobsServer.Domain.Interfaces.Services;
 using JobsServer.Domain.Entities;
-using System;
-using System.Buffers.Text;
-using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
+
 namespace JobQueueSystem.WorkerNodes.Services
 {
     /// <summary>

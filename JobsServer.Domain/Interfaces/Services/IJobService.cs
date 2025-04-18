@@ -1,6 +1,6 @@
-﻿using JobsServer.Application.DTOs;
+﻿using JobQueueSystem.Core.DTOs;
 
-namespace JobsServer.Application.Interfaces
+namespace JobsServer.Domain.Interfaces.Services
 {
     public interface IJobService
     {

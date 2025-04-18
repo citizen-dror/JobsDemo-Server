@@ -1,10 +1,10 @@
 ﻿using AutoMapper;
-using JobsServer.Application.DTOs;
-using JobsServer.Application.Interfaces;
-using JobsServer.Application.Notifications;
+using JobQueueSystem.Core.DTOs;
+using JobQueueSystem.Core.Enums;
 using JobsServer.Domain.Entities;
-using JobsServer.Domain.Enums;
+using JobsServer.Domain.Interfaces.Services;
 using JobsServer.Domain.Interfaces.Repositories;
+using JobsServer.Domain.Interfaces.APIs;
 
 namespace JobsServer.Application.Services
 {

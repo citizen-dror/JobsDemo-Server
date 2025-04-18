@@ -1,6 +1,6 @@
 ﻿using JobsServer.Domain.Entities;
 
-namespace JobQueueSystem.Core.Interfaces
+namespace JobsServer.Domain.Interfaces.Services
 {
     /// <summary>
     /// Interface defining the job processor operations

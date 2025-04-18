@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace JobQueueSystem.Core.Interfaces
+namespace JobsServer.Domain.Interfaces.APIs
 {
     /// <summary>
     /// SignalR hub interface that defines methods for broadcasting updates

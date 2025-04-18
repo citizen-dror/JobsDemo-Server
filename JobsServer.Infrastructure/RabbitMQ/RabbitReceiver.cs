@@ -18,9 +18,9 @@ namespace JobsServer.Infrastructure.RabbitMQ
         public RabbitReceiver(
             RabbitConnectionFactory connectionFactory,
             ILogger<RabbitReceiver> logger,
-            string exchangeName = "JobWorker1",
+            string exchangeName = "worker.jobs",
             string routingKey = "job-rkey1",
-            bool durable = false,
+            bool durable = true,
             bool exclusive = false,
             bool autoDelete = false)
         {
@@ -33,7 +33,7 @@ namespace JobsServer.Infrastructure.RabbitMQ
             _autoDelete = autoDelete;
         }
 
-        public async Task StartReceivingAsync(string queueName, Func<string, Task> onMessageReceived, CancellationToken cancellationToken = default)
+        public async Task StartReceivingAsync(string queueName, Func<string, Task> onMessageReceived, string? routingKeyOverride = null,  CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(queueName))
             {
@@ -56,16 +56,25 @@ namespace JobsServer.Infrastructure.RabbitMQ
 
                 await channel.ExchangeDeclareAsync(_exchangeName, "direct");
                 await channel.QueueDeclareAsync(queue: queueName, durable: _durable, exclusive: _exclusive, autoDelete: _autoDelete, arguments: null);
-                await channel.QueueBindAsync(queue: queueName, exchange: _exchangeName, routingKey: _routingKey, arguments: null);
+                await channel.QueueBindAsync(queue: queueName, exchange: _exchangeName, routingKey: routingKeyOverride ?? _routingKey, arguments: null);
 
                 var consumer = new AsyncEventingBasicConsumer(channel);
-                consumer.ReceivedAsync += (model, ea) =>
+                consumer.ReceivedAsync += async (model, ea) =>
                 {
                     var body = ea.Body.ToArray();
                     var message = Encoding.UTF8.GetString(body);
                     _logger.LogInformation($"Received message: {message}");
-                    return Task.CompletedTask;
+
+                    try
+                    {
+                        await onMessageReceived(message);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error in message handler.");
+                    }
                 };
+
                 _logger.LogInformation("Starting consumer...");
 
                 await channel.BasicConsumeAsync(queue: queueName, autoAck: true, consumer: consumer);

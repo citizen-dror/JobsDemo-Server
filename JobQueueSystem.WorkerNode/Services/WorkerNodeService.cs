@@ -1,9 +1,11 @@
-﻿using JobQueueSystem.Core.Interfaces;
-using JobsServer.Domain.Entities;
-using JobsServer.Domain.Enums;
-using Microsoft.Extensions.Options;
-using System;
+﻿using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using System.Collections.Concurrent;
+using JobsServer.Infrastructure.RabbitMQ;
+using JobQueueSystem.Core.Enums;
+using JobsServer.Domain.Interfaces.Services;
+using JobsServer.Domain.Entities;
+using JobsServer.Domain.Interfaces.APIs;
 
 namespace JobQueueSystem.WorkerNodes.Services
 {
@@ -32,32 +34,83 @@ namespace JobQueueSystem.WorkerNodes.Services
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _logger.LogInformation($"Worker Node Service starting with name {_settings.WorkerName}");
-
-            // Create a scope to resolve scoped services
-            using (var scope = _scopeFactory.CreateScope())
+            // Step 1: Register worker with the job queue service
+            var workerId = await RegisterWorkerWithQueueService();
+            if (string.IsNullOrEmpty(workerId))
             {
-                var apiClient = scope.ServiceProvider.GetRequiredService<IWorkerApiClient>();
-                // Register worker with job queue service
-                var worker = new JobsServer.Domain.Entities.WorkerNode
-                {
-                    Name = _settings.WorkerName,
-                    ConcurrencyLimit = _settings.ConcurrencyLimit,
-                    Status = WorkerStatus.Idle
-                };
-                var registration = await apiClient.RegisterWorker(worker);
-                if (registration == null)
-                {
-                    _logger.LogError("Failed to register worker with job queue service");
-                    return;
-                }
-                _workerId = registration.Id;
-                _logger.LogInformation($"Worker registered with ID: {_workerId}");
+                _logger.LogError("Failed to register worker. Service cannot start.");
+                return;
             }
-
-            // Start heartbeat timer
+            // Step 2: Subscribe to worker's job queue
+            await SubscribeToRabbitJobQueue(_workerId, stoppingToken);
+            // Step 3: Start the heartbeat timer
             _heartbeatTimer = new Timer(SendHeartbeat, null, TimeSpan.Zero, TimeSpan.FromSeconds(30));
+            // Keep the service running
             await Task.Delay(Timeout.Infinite, stoppingToken);
         }
+        private async Task<string> RegisterWorkerWithQueueService()
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var apiClient = scope.ServiceProvider.GetRequiredService<IWorkerApiClient>();
+
+            var worker = new WorkerNode
+            {
+                Name = _settings.WorkerName,
+                ConcurrencyLimit = _settings.ConcurrencyLimit,
+                Status = WorkerStatus.Idle
+            };
+
+            var registration = await apiClient.RegisterWorker(worker);
+            if (registration == null)
+            {
+                _logger.LogError("Failed to register worker with job queue service");
+                return null;
+            }
+
+            _workerId = registration.Id;
+            _logger.LogInformation($"Worker registered with ID: {_workerId}");
+            return _workerId;
+        }
+
+        private async Task SubscribeToRabbitJobQueue(string workerId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var rabbitReceiver = scope.ServiceProvider.GetRequiredService<RabbitReceiver>();
+
+                // Queue name specific to this worker
+                string queueName = $"worker.{workerId}";
+                _logger.LogInformation($"Subscribing to job queue: {queueName}");
+
+                await rabbitReceiver.StartReceivingAsync(
+                    queueName,
+                    async (message) => {
+                        // Deserialize message to Job
+                        try
+                        {
+                            var job = JsonConvert.DeserializeObject<Job>(message);
+                            if (job != null)
+                            {
+                                _logger.LogInformation($"Received job {job.Id} from queue");
+                                await AcceptJob(job);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, $"Error processing message from queue: {message}");
+                        }
+                    },
+                    routingKeyOverride: queueName,
+                    cancellationToken: cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error subscribing to job queue for worker {workerId}");
+                throw;
+            }
+        }
+
         private async void SendHeartbeat(object state)
         {
             try

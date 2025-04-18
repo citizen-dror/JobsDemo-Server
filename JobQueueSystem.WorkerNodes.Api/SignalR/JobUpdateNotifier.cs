@@ -2,7 +2,7 @@
 using JobsServer.Domain.Interfaces.APIs;
 using Microsoft.AspNetCore.SignalR;
 
-namespace JobsServer.Api.SignalR
+namespace JobQueueSystem.WorkerNodes.Api.SignalR
 {
     public class JobUpdateNotifier : IJobUpdateNotifier
     {

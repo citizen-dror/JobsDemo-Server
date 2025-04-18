@@ -1,4 +1,4 @@
-﻿namespace JobsServer.Api.Models
+﻿namespace JobQueueSystem.Core.DTOs
 {
     public class JobProgressUpdateRequest
     {

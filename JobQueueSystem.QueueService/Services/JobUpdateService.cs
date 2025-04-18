@@ -1,8 +1,8 @@
-﻿using JobQueueSystem.Core.Data;
-using JobQueueSystem.Core.Interfaces;
-using JobQueueSystem.QueueService.SignalR;
+﻿using JobQueueSystem.QueueService.SignalR;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using JobsServer.Infrastructure;
+using JobsServer.Domain.Interfaces.APIs;
 
 namespace JobQueueSystem.QueueService.Services
 {/// <summary>
@@ -35,7 +35,7 @@ namespace JobQueueSystem.QueueService.Services
             }
 
             using var scope = _serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<JobDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
             try
             {
@@ -84,7 +84,7 @@ namespace JobQueueSystem.QueueService.Services
             }
 
             using var scope = _serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<JobDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
             try
             {

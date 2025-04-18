@@ -1,12 +1,12 @@
-﻿using JobsServer.Application.Interfaces;
-using JobsServer.Domain.DTOs;
+﻿
+using JobQueueSystem.Core.DTOs;
+using JobQueueSystem.Core.Enums;
 using JobsServer.Domain.Entities;
-using JobsServer.Domain.Enums;
 using JobsServer.Domain.Interfaces.Repositories;
+using JobsServer.Domain.Interfaces.Services;
 using JobsServer.Infrastructure.RabbitMQ;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using System.Text;
 
 namespace JobQueueSystem.QueueService.Services
 {
@@ -110,7 +110,8 @@ namespace JobQueueSystem.QueueService.Services
             try
             {
                 var jobJson = JsonConvert.SerializeObject(job);
-                await _rabbitSender.SendMessageAsync(queueName: workerId, message: jobJson, routingKeyOverride: workerId);
+                var queueName = $"worker.{workerId}";
+                await _rabbitSender.SendMessageAsync(queueName: queueName, message: jobJson, routingKeyOverride: queueName);
 
                 _logger.LogInformation($"Published job {job.Id} to worker {workerId}");
             }

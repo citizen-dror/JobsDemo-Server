@@ -1,14 +1,9 @@
-﻿using JobQueueSystem.Core.Interfaces;
-using JobsServer.Domain.Entities;
-using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
+﻿using Microsoft.Extensions.Options;
 using System.Net.Http.Json;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
+using JobQueueSystem.Core.Enums;
+using JobsServer.Domain.Entities;
+using JobsServer.Domain.Interfaces.APIs;
 
 namespace JobQueueSystem.WorkerNodes.Services
 {
@@ -146,6 +141,7 @@ namespace JobQueueSystem.WorkerNodes.Services
                     Progress = progress
                 };
 
+                //var response = await _httpClient.PutAsJsonAsync($"api/jobs/{jobId}/progress", progressUpdate, _jsonOptions);
                 var response = await _httpClient.PutAsJsonAsync($"api/jobs/{jobId}/progress", progressUpdate, _jsonOptions);
 
                 if (!response.IsSuccessStatusCode)
