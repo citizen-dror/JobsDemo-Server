@@ -98,6 +98,15 @@ namespace JobQueueSystem.WorkerNodes.Api.Controllers
             return Ok(jobs);
         }
 
+
+        [HttpPut("{jobId}/jobstatus")]
+        public async Task<IActionResult> UpdateJobStatus(int jobId, [FromBody] JobStatus status)
+        {
+            var res = await _jobService.UpdateJobStatus(jobId, status);
+            return res ? Ok() : NotFound();
+        }
+        
+
         [HttpPut("{jobId}/progress")]
         public async Task<IActionResult> UpdateJobProgress(int jobId, [FromBody] int progress)
         {

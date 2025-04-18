@@ -5,6 +5,7 @@ using JobsServer.Domain.Entities;
 using JobsServer.Domain.Interfaces.Services;
 using JobsServer.Domain.Interfaces.Repositories;
 using JobsServer.Domain.Interfaces.APIs;
+using System;
 
 namespace JobsServer.Application.Services
 {
@@ -42,6 +43,19 @@ namespace JobsServer.Application.Services
             return _mapper.Map<JobDto>(job);
         }
 
+        public async Task<bool> UpdateJobStatus(int id, JobStatus status)
+        {
+            var job = await _repository.GetByIdAsync(id);
+            if (job != null)
+            {
+                job.Status = status;
+                await _repository.UpdateAsync(job);
+                // Notify API via JobUpdateNotifier (which will trigger SignalR)
+                // await _jobUpdateNotifier.NotifyJobUpdate(job);
+                return true;
+            }
+            return false;
+        }
         public async Task<bool> UpdateJobProgress(int id, int progress)
         {
             var job = await _repository.GetByIdAsync(id);

@@ -119,7 +119,7 @@ namespace JobQueueSystem.WorkerNodes.Services
         {
             try
             {
-                var response = await _httpClient.PutAsJsonAsync($"api/jobs/{job.Id}/status", job, _jsonOptions);
+                var response = await _httpClient.PutAsJsonAsync($"api/worker/{job.Id}/jobstatus", job.Status, _jsonOptions);
 
                 if (!response.IsSuccessStatusCode)
                 {
