@@ -136,17 +136,15 @@ namespace JobQueueSystem.WorkerNodes.Services
         {
             try
             {
-                var progressUpdate = new
-                {
-                    Progress = progress
-                };
-
-                //var response = await _httpClient.PutAsJsonAsync($"api/jobs/{jobId}/progress", progressUpdate, _jsonOptions);
-                var response = await _httpClient.PutAsJsonAsync($"api/jobs/{jobId}/progress", progressUpdate, _jsonOptions);
+                var response = await _httpClient.PutAsJsonAsync(
+                    $"api/worker/{jobId}/progress",
+                    progress,
+                    _jsonOptions
+                );
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    _logger.LogWarning($"Failed to update job progress. Status: {response.StatusCode}");
+                    _logger.LogWarning($"Failed to update job progress for JobId={jobId}. Status: {response.StatusCode}");
                 }
             }
             catch (Exception ex)

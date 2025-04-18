@@ -98,10 +98,10 @@ namespace JobQueueSystem.WorkerNodes.Api.Controllers
             return Ok(jobs);
         }
 
-        [HttpPost("updateProgress")]
-        public async Task<IActionResult> UpdateJobProgress([FromBody] JobProgressUpdateRequest request)
+        [HttpPut("{jobId}/progress")]
+        public async Task<IActionResult> UpdateJobProgress(int jobId, [FromBody] int progress)
         {
-            var res = await _jobService.UpdateJobProgress(request.JobId, request.Progress);
+            var res = await _jobService.UpdateJobProgress(jobId, progress);
             return res ? Ok() : NotFound();
         }
 
