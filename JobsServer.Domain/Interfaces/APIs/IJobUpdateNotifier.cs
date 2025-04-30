@@ -1,9 +1,9 @@
-﻿using JobsServer.Domain.Entities;
+﻿using JobQueueSystem.Core.DTOs;
 
 namespace JobsServer.Domain.Interfaces.APIs
 {
     public interface IJobUpdateNotifier
     {
-        Task NotifyJobUpdate(Job job);
+        Task NotifyJobUpdate(JobStatusDto jobStatus);
     }
 }

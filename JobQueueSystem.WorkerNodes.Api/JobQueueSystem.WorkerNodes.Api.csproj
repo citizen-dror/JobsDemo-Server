@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="14.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.2.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
@@ -14,7 +15,6 @@
   <ItemGroup>
     <ProjectReference Include="..\JobQueueSystem.Core\JobQueueSystem.Core.csproj" />
     <ProjectReference Include="..\JobQueueSystem.QueueService\JobQueueSystem.QueueService.csproj" />
-    <ProjectReference Include="..\JobsServer.Application\JobsServer.Application.csproj" />
     <ProjectReference Include="..\JobsServer.Domain\JobsServer.Domain.csproj" />
     <ProjectReference Include="..\JobsServer.Infrastructure\JobsServer.Infrastructure.csproj" />
   </ItemGroup>

@@ -13,13 +13,13 @@ namespace JobsServer.Application.Services
     {
         private readonly IJobRepository _repository;
         private readonly IMapper _mapper;
-        private readonly IJobUpdateNotifier _jobUpdateNotifier;
+        // private readonly IJobUpdateNotifier _jobUpdateNotifier;
 
-        public JobService(IJobRepository repository, IMapper mapper, IJobUpdateNotifier jobUpdateNotifier)
+        public JobService(IJobRepository repository, IMapper mapper)
         {
             _repository = repository;
             _mapper = mapper;
-            _jobUpdateNotifier = jobUpdateNotifier;
+            //_jobUpdateNotifier = jobUpdateNotifier;
         }
 
         public async Task<IEnumerable<JobDto>> GetAllJobsAsync()
@@ -65,7 +65,7 @@ namespace JobsServer.Application.Services
                 job.Status = progress == 100 ? JobStatus.Completed : JobStatus.InProgress;
                 await _repository.UpdateAsync(job);
                 // Notify API via JobUpdateNotifier (which will trigger SignalR)
-                await _jobUpdateNotifier.NotifyJobUpdate(job);
+                // await _jobUpdateNotifier.NotifyJobUpdate(job);
                 return true;
             }
             return false;

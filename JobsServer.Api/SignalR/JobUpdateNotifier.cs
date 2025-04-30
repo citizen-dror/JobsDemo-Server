@@ -1,4 +1,4 @@
-﻿using JobsServer.Domain.Entities;
+﻿using JobQueueSystem.Core.DTOs;
 using JobsServer.Domain.Interfaces.APIs;
 using Microsoft.AspNetCore.SignalR;
 
@@ -13,9 +13,10 @@ namespace JobsServer.Api.SignalR
             _hubContext = hubContext;
         }
 
-        public async Task NotifyJobUpdate(Job job)
+        public async Task NotifyJobUpdate(JobStatusDto jobStatus)
         {
-            await _hubContext.Clients.All.SendAsync("ReceiveJobUpdate", job);
+            await _hubContext.Clients.All.SendAsync("ReceiveJobUpdate", jobStatus);
         }
+
     }
 }

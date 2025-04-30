@@ -7,9 +7,8 @@ using JobsServer.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using JobQueueSystem.Core.Configs;
 using JobsServer.Infrastructure.RabbitMQ;
-using JobsServer.Application.Services;
-using JobsServer.Application.Mappings;
-using JobQueueSystem.WorkerNodes.Api.SignalR;
+using JobQueueSystem.WorkerNodes.Api.Services;
+// using JobQueueSystem.WorkerNodes.Api.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 // Configure services
@@ -33,7 +32,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 // Map SignalR hubs
-app.MapHub<JobHub>("/jobHub");
+// app.MapHub<JobHub>("/jobHub");
 
 app.Run();
 
@@ -79,15 +78,20 @@ void ConfigureServices(WebApplicationBuilder builder)
     builder.Services.AddInfrastructure(builder.Configuration);
 
     // Register AutoMapper
-    builder.Services.AddAutoMapper(typeof(JobProfile));
+    // builder.Services.AddAutoMapper(typeof(JobProfile));
     // Register Notifier
-    builder.Services.AddSingleton<IJobUpdateNotifier, JobUpdateNotifier>();
+    // builder.Services.AddSingleton<IJobUpdateNotifier, JobUpdateNotifier>();
+    builder.Services.AddHttpClient("JobsServerClient", client =>
+    {
+        client.BaseAddress = new Uri("http://localhost:5125");
+    });
 
     // Register Worker services
     builder.Services.AddScoped<IWorkerRepository, WorkerRepository>();
     builder.Services.AddScoped<IWorkerService, WorkerService>();
     builder.Services.AddScoped<IJobRepository, JobRepository>();
-    builder.Services.AddScoped<IJobService, JobService>();
+    builder.Services.AddScoped<IJobProgressService, JobProgressService>();
+    builder.Services.AddScoped<IJobNotificationForwarderService, JobNotificationForwarderService>();
 
     // Register RabbitMQ dependencies
     var rabbitMqConfig = builder.Configuration.GetSection("RabbitMQ").Get<RabbitMQConfig>();
@@ -96,5 +100,5 @@ void ConfigureServices(WebApplicationBuilder builder)
     builder.Services.AddScoped<RabbitSender>();
 
     // Add SignalR services
-    builder.Services.AddSignalR();
+    // builder.Services.AddSignalR();
 }

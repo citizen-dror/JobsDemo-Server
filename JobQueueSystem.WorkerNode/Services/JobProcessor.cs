@@ -57,7 +57,7 @@ namespace JobQueueSystem.WorkerNodes.Services
             {
                 if (i > 0)
                 {
-                    await Task.Delay(500); // Simulate work being done
+                    await Task.Delay(5000); // Simulate work being done
                 }
                 progress.Report(i);
             }

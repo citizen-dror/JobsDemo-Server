@@ -1,8 +1,10 @@
 ﻿using JobQueueSystem.Core.DTOs;
 using JobQueueSystem.Core.Enums;
+using JobQueueSystem.WorkerNodes.Api.Services;
 using JobsServer.Domain.Entities;
 using JobsServer.Domain.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace JobQueueSystem.WorkerNodes.Api.Controllers
 {
@@ -11,13 +13,15 @@ namespace JobQueueSystem.WorkerNodes.Api.Controllers
     public class WorkerController : ControllerBase
     {
         private readonly IWorkerService _workerService;
-        private readonly IJobService _jobService;
+        private readonly IJobProgressService _jobProgressService;
+        private readonly IJobNotificationForwarderService _jobNotifier;
         private readonly ILogger<WorkerController> _logger;
 
-        public WorkerController(IWorkerService workerService, IJobService jobService, ILogger<WorkerController> logger)
+        public WorkerController(IWorkerService workerService, IJobProgressService jobProgressService, IJobNotificationForwarderService jobNotificationForwarderService, ILogger<WorkerController> logger)
         {
             _workerService = workerService;
-            _jobService = jobService;
+            _jobProgressService = jobProgressService;
+            _jobNotifier = jobNotificationForwarderService;
             _logger = logger;
         }
 
@@ -102,7 +106,7 @@ namespace JobQueueSystem.WorkerNodes.Api.Controllers
         [HttpPut("{jobId}/jobstatus")]
         public async Task<IActionResult> UpdateJobStatus(int jobId, [FromBody] JobStatus status)
         {
-            var res = await _jobService.UpdateJobStatus(jobId, status);
+            var res = await _jobProgressService.UpdateJobStatus(jobId, status);
             return res ? Ok() : NotFound();
         }
         
@@ -110,8 +114,13 @@ namespace JobQueueSystem.WorkerNodes.Api.Controllers
         [HttpPut("{jobId}/progress")]
         public async Task<IActionResult> UpdateJobProgress(int jobId, [FromBody] int progress)
         {
-            var res = await _jobService.UpdateJobProgress(jobId, progress);
-            return res ? Ok() : NotFound();
+            var jobStatusDto = await _jobProgressService.UpdateJobProgress(jobId, progress);
+            if (jobStatusDto == null)
+                return NotFound();
+
+            await _jobNotifier.NotifyProgressAsync(jobStatusDto); // send to JobsServer.Api
+
+            return Ok();
         }
 
     }
