@@ -7,7 +7,7 @@ namespace JobsServer.Domain.Interfaces.APIs
     public interface IWorkerApiClient
     {
         // Worker registration and status
-        Task<WorkerNode> RegisterWorker(WorkerNode worker);
+        Task<WorkerNode> RegisterWorker(WorkerNode worker, int maxRetries = 3);
         Task SendHeartbeat(string workerId, WorkerStatus status, int activeJobCount);
         Task UpdateWorkerStatus(string workerId, WorkerStatus status);
 

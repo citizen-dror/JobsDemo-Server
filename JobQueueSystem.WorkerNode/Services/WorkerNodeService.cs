@@ -34,6 +34,7 @@ namespace JobQueueSystem.WorkerNodes.Services
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _logger.LogInformation($"Worker Node Service starting with name {_settings.WorkerName}");
+
             // Step 1: Register worker with the job queue service
             var workerId = await RegisterWorkerWithQueueService();
             if (string.IsNullOrEmpty(workerId))

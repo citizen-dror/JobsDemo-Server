@@ -31,25 +31,36 @@ namespace JobQueueSystem.WorkerNodes.Services
             _httpClient.BaseAddress = new Uri(_settings.QueueServiceUrl);
         }
 
-        public async Task<WorkerNode> RegisterWorker(WorkerNode worker)
+        public async Task<WorkerNode> RegisterWorker(WorkerNode worker, int maxRetries = 3)
         {
-            try
+            for (int attempt = 1; attempt <= maxRetries; attempt++)
             {
-                var response = await _httpClient.PostAsJsonAsync("api/worker/register", worker, _jsonOptions);
-
-                if (response.IsSuccessStatusCode)
+                try
                 {
-                    return await response.Content.ReadFromJsonAsync<WorkerNode>(_jsonOptions);
+                    var response = await _httpClient.PostAsJsonAsync("api/worker/register", worker, _jsonOptions);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        return await response.Content.ReadFromJsonAsync<WorkerNode>(_jsonOptions);
+                    }
+
+                    _logger.LogWarning($"Attempt {attempt}: Failed to register worker. Status: {response.StatusCode}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, $"Attempt {attempt}: Exception occurred while registering worker");
                 }
 
-                _logger.LogError($"Failed to register worker. Status: {response.StatusCode}");
-                return null;
+                if (attempt < maxRetries)
+                {
+                    var delaySeconds = 2 * attempt; // exponential backoff: 2s, 4s...
+                    _logger.LogInformation($"Waiting {delaySeconds} seconds before retrying...");
+                    await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+                }
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Exception occurred while registering worker");
-                return null;
-            }
+
+            _logger.LogError("All attempts to register the worker have failed.");
+            return null;
         }
 
         public async Task SendHeartbeat(string workerId, WorkerStatus status, int activeJobCount)
