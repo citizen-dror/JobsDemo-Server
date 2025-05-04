@@ -28,8 +28,8 @@ namespace JobQueueSystem.QueueService.Services
             // Timer for processing the job queue (every 10seconds)
             _queueProcessorTimer = new Timer(ProcessQueue, null, TimeSpan.Zero, TimeSpan.FromSeconds(10));
 
-            // Timer for checking worker heartbeats (every 30 seconds)
-            _heartbeatTimer = new Timer(CheckWorkerHeartbeats, null, TimeSpan.Zero, TimeSpan.FromSeconds(30));
+            // Timer for checking worker heartbeats (every 2 min)
+            _heartbeatTimer = new Timer(CheckWorkerHeartbeats, null, TimeSpan.Zero, TimeSpan.FromSeconds(120));
 
             return Task.CompletedTask;
         }

@@ -1,5 +1,6 @@
 ﻿using JobsServer.Domain.Interfaces.Services;
 using JobsServer.Domain.Entities;
+using System.Collections.Concurrent;
 
 namespace JobQueueSystem.WorkerNodes.Services
 {
@@ -14,6 +15,7 @@ namespace JobQueueSystem.WorkerNodes.Services
     /// </summary>
     public class JobProcessor : IJobProcessor
     {
+       
         private readonly ILogger<JobProcessor> _logger;
 
         public JobProcessor(ILogger<JobProcessor> logger)
@@ -21,20 +23,27 @@ namespace JobQueueSystem.WorkerNodes.Services
             _logger = logger;
         }
 
-        public async Task<JobProcessResult> ProcessJob(Job job, IProgress<int> progress)
+        public async Task<JobProcessResult> ProcessJob(Job job, IProgress<int> progress, CancellationToken token)
         {
             _logger.LogInformation($"Processing job {job.Id} ({job.JobName}) of type {job.JobType}");
-
             try
             {
-                // Determine which job handler to use based on job type
                 return job.JobType switch
                 {
-                    "DataProcessing" => await ProcessDataJob(job, progress),
-                    "FileConversion" => await ProcessFileJob(job, progress),
-                    "Notification" => await ProcessNotificationJob(job, progress),
-                    "Report" => await ProcessReportJob(job, progress),
-                    _ => await ProcessGenericJob(job, progress)
+                    "DataProcessing" => await ProcessDataJob(job, progress, token),
+                    "FileConversion" => await ProcessFileJob(job, progress, token),
+                    "Notification" => await ProcessNotificationJob(job, progress, token),
+                    "Report" => await ProcessReportJob(job, progress, token),
+                    _ => await ProcessGenericJob(job, progress, token)
+                };
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogWarning($"Job {job.Id} was cancelled.");
+                return new JobProcessResult
+                {
+                    Success = false,
+                    ErrorMessage = "Job was cancelled by user."
                 };
             }
             catch (Exception ex)
@@ -45,24 +54,19 @@ namespace JobQueueSystem.WorkerNodes.Services
                     Success = false,
                     ErrorMessage = $"Job processor exception: {ex.Message}"
                 };
-            }
+            }            
         }
 
-        private async Task<JobProcessResult> ProcessDataJob(Job job, IProgress<int> progress)
+        private async Task<JobProcessResult> ProcessDataJob(Job job, IProgress<int> progress, CancellationToken token)
         {
             _logger.LogInformation($"Processing data job {job.Id}");
 
-            // Simulate data processing with progress
             for (int i = 0; i <= 100; i += 10)
             {
-                if (i > 0)
-                {
-                    await Task.Delay(5000); // Simulate work being done
-                }
+                token.ThrowIfCancellationRequested();
+                if (i > 0) await Task.Delay(5000, token);
                 progress.Report(i);
             }
-
-            // Here you would parse the job.JobData and perform actual data processing logic
 
             return new JobProcessResult
             {
@@ -71,16 +75,17 @@ namespace JobQueueSystem.WorkerNodes.Services
             };
         }
 
-        private async Task<JobProcessResult> ProcessFileJob(Job job, IProgress<int> progress)
+        private async Task<JobProcessResult> ProcessFileJob(Job job, IProgress<int> progress, CancellationToken token)
         {
             _logger.LogInformation($"Processing file job {job.Id}");
 
             // Simulate file processing with progress
             for (int i = 0; i <= 100; i += 5)
             {
+                token.ThrowIfCancellationRequested();
                 if (i > 0)
                 {
-                    await Task.Delay(200); // Simulate work being done
+                    await Task.Delay(1000); // Simulate work being done
                 }
                 progress.Report(i);
             }
@@ -94,16 +99,21 @@ namespace JobQueueSystem.WorkerNodes.Services
             };
         }
 
-        private async Task<JobProcessResult> ProcessNotificationJob(Job job, IProgress<int> progress)
+        private async Task<JobProcessResult> ProcessNotificationJob(Job job, IProgress<int> progress, CancellationToken token)
         {
             _logger.LogInformation($"Processing notification job {job.Id}");
 
             // Notifications typically have a simpler progress pattern
-            progress.Report(10);
-            await Task.Delay(100);
-            progress.Report(50);
-            await Task.Delay(100);
-            progress.Report(100);
+            // Simulate file processing with progress
+            for (int i = 0; i <= 100; i += 5)
+            {
+                token.ThrowIfCancellationRequested();
+                if (i > 0)
+                {
+                    await Task.Delay(1000); // Simulate work being done
+                }
+                progress.Report(i);
+            }
 
             // Here you would parse job.JobData and send the notification
 
@@ -114,7 +124,7 @@ namespace JobQueueSystem.WorkerNodes.Services
             };
         }
 
-        private async Task<JobProcessResult> ProcessReportJob(Job job, IProgress<int> progress)
+        private async Task<JobProcessResult> ProcessReportJob(Job job, IProgress<int> progress, CancellationToken token)
         {
             _logger.LogInformation($"Processing report job {job.Id}");
 
@@ -123,7 +133,8 @@ namespace JobQueueSystem.WorkerNodes.Services
 
             foreach (var step in steps)
             {
-                await Task.Delay(300); // Reports often have longer processing times
+                token.ThrowIfCancellationRequested();
+                await Task.Delay(3000); // Reports often have longer processing times
                 progress.Report(step);
             }
 
@@ -136,13 +147,14 @@ namespace JobQueueSystem.WorkerNodes.Services
             };
         }
 
-        private async Task<JobProcessResult> ProcessGenericJob(Job job, IProgress<int> progress)
+        private async Task<JobProcessResult> ProcessGenericJob(Job job, IProgress<int> progress, CancellationToken token)
         {
             _logger.LogWarning($"Processing unknown job type: {job.JobType}");
 
             // Simple linear progress for unknown job types
             for (int i = 0; i <= 100; i += 20)
             {
+                token.ThrowIfCancellationRequested();
                 await Task.Delay(200);
                 progress.Report(i);
             }

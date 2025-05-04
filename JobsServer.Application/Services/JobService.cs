@@ -6,19 +6,22 @@ using JobsServer.Domain.Interfaces.Services;
 using JobsServer.Domain.Interfaces.Repositories;
 using JobsServer.Domain.Interfaces.APIs;
 using System;
+using JobsServer.Domain.DTOs;
 
 namespace JobsServer.Application.Services
 {
     public class JobService : IJobService
     {
         private readonly IJobRepository _repository;
+        private readonly IWorkerMessagePublisher _workerMessagePublisher;
         private readonly IMapper _mapper;
         // private readonly IJobUpdateNotifier _jobUpdateNotifier;
 
-        public JobService(IJobRepository repository, IMapper mapper)
+        public JobService(IJobRepository repository, IWorkerMessagePublisher workerMessagePublisher,  IMapper mapper)
         {
             _repository = repository;
-            _mapper = mapper;
+            _workerMessagePublisher = workerMessagePublisher;
+            _mapper = mapper;           
             //_jobUpdateNotifier = jobUpdateNotifier;
         }
 
@@ -74,9 +77,21 @@ namespace JobsServer.Application.Services
         public async Task<bool> StopJobAsync(int id)
         {
             var job = await _repository.GetByIdAsync(id);
-            if (job == null || job.Status != JobStatus.InProgress) return false;
+            if (job == null || job.Status != JobStatus.InProgress) 
+                return false;
             job.Status = JobStatus.Failed;
             await _repository.UpdateAsync(job);
+            // puplish StopJob to workerNode
+            if (!string.IsNullOrEmpty(job.AssignedWorker))
+            {
+                var controlMessage = new JobControlMessage
+                {
+                    Type = JobControlType.StopJob,
+                    JobId = job.Id
+                };
+                await _workerMessagePublisher.PublishControlMessageAsync(job.AssignedWorker, controlMessage);
+            }
+
             return true;
         }
 
@@ -87,6 +102,18 @@ namespace JobsServer.Application.Services
             job.Status = JobStatus.Pending;
             job.Progress = 0;
             await _repository.UpdateAsync(job);
+
+            // puplish RestartJob to workerNode
+            if (!string.IsNullOrEmpty(job.AssignedWorker))
+            {
+                var controlMessage = new JobControlMessage
+                {
+                    Type = JobControlType.RestartJob,
+                    JobId = job.Id
+                };
+                await _workerMessagePublisher.PublishControlMessageAsync(job.AssignedWorker, controlMessage);
+            }
+
             return true;
         }
 

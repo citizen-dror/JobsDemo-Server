@@ -86,6 +86,13 @@ void ConfigureServices(WebApplicationBuilder builder)
         client.BaseAddress = new Uri("http://localhost:5125");
     });
 
+
+    // Register RabbitMQ dependencies
+    var rabbitMqConfig = builder.Configuration.GetSection("RabbitMQ").Get<RabbitMQConfig>();
+    builder.Services.AddSingleton(rabbitMqConfig);
+    builder.Services.AddSingleton<RabbitConnectionFactory>();
+    builder.Services.AddScoped<IRabbitSender, RabbitSender>();
+
     // Register Worker services
     builder.Services.AddScoped<IWorkerRepository, WorkerRepository>();
     builder.Services.AddScoped<IWorkerService, WorkerService>();
@@ -93,11 +100,6 @@ void ConfigureServices(WebApplicationBuilder builder)
     builder.Services.AddScoped<IJobProgressService, JobProgressService>();
     builder.Services.AddScoped<IJobNotificationForwarderService, JobNotificationForwarderService>();
 
-    // Register RabbitMQ dependencies
-    var rabbitMqConfig = builder.Configuration.GetSection("RabbitMQ").Get<RabbitMQConfig>();
-    builder.Services.AddSingleton(rabbitMqConfig);
-    builder.Services.AddSingleton<RabbitConnectionFactory>();
-    builder.Services.AddScoped<RabbitSender>();
 
     // Add SignalR services
     // builder.Services.AddSignalR();

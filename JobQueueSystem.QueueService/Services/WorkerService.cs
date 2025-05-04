@@ -1,7 +1,9 @@
 ﻿
 using JobQueueSystem.Core.DTOs;
 using JobQueueSystem.Core.Enums;
+using JobsServer.Domain.DTOs;
 using JobsServer.Domain.Entities;
+using JobsServer.Domain.Interfaces.APIs;
 using JobsServer.Domain.Interfaces.Repositories;
 using JobsServer.Domain.Interfaces.Services;
 using JobsServer.Infrastructure.RabbitMQ;
@@ -15,10 +17,10 @@ namespace JobQueueSystem.QueueService.Services
     public class WorkerService : IWorkerService
     {
         private readonly IWorkerRepository _workerRepository;
-        private readonly RabbitSender _rabbitSender;
+        private readonly IRabbitSender _rabbitSender;
         private readonly ILogger<WorkerService> _logger;
 
-        public WorkerService(IWorkerRepository workerRepository, RabbitSender rabbitSender, ILogger<WorkerService> logger)
+        public WorkerService(IWorkerRepository workerRepository, IRabbitSender rabbitSender, ILogger<WorkerService> logger)
         {
             _workerRepository = workerRepository;
             _rabbitSender = rabbitSender;
@@ -109,15 +111,20 @@ namespace JobQueueSystem.QueueService.Services
         {
             try
             {
-                var jobJson = JsonConvert.SerializeObject(job);
+                var controlMessage = new JobControlMessage
+                {
+                    Type = JobControlType.AssignJobToWorker,
+                    Job = job
+                };
+                var messageJson = JsonConvert.SerializeObject(controlMessage);
                 var queueName = $"worker.{workerId}";
-                await _rabbitSender.SendMessageAsync(queueName: queueName, message: jobJson, routingKeyOverride: queueName);
+                await _rabbitSender.SendMessageAsync(queueName: queueName, message: messageJson, routingKeyOverride: queueName);
 
-                _logger.LogInformation($"Published job {job.Id} to worker {workerId}");
+                _logger.LogInformation($"Published Assign job {job.Id} to worker {workerId}");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error publishing job {job.Id} to worker {workerId}");
+                _logger.LogError(ex, $"Error publishing Assign job {job.Id} to worker {workerId}");
                 throw;
             }
         }

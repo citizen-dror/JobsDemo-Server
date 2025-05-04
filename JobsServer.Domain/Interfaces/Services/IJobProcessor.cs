@@ -7,7 +7,7 @@ namespace JobsServer.Domain.Interfaces.Services
     /// </summary>
     public interface IJobProcessor
     {
-        Task<JobProcessResult> ProcessJob(Job job, IProgress<int> progress);
+        Task<JobProcessResult> ProcessJob(Job job, IProgress<int> progress, CancellationToken token);       
     }
 
     /// <summary>

@@ -1,10 +1,11 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using JobsServer.Domain.Interfaces.APIs;
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using System.Text;
 
 namespace JobsServer.Infrastructure.RabbitMQ
 {
-    public class RabbitSender
+    public class RabbitSender: IRabbitSender
     {
         private readonly RabbitConnectionFactory _connectionFactory;
         private readonly ILogger<RabbitSender> _logger;

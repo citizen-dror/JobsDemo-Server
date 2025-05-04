@@ -6,6 +6,7 @@ using JobQueueSystem.Core.Enums;
 using JobsServer.Domain.Interfaces.Services;
 using JobsServer.Domain.Entities;
 using JobsServer.Domain.Interfaces.APIs;
+using JobsServer.Domain.DTOs;
 
 namespace JobQueueSystem.WorkerNodes.Services
 {
@@ -16,6 +17,7 @@ namespace JobQueueSystem.WorkerNodes.Services
         private readonly IJobProcessor _jobProcessor;
         private readonly WorkerSettings _settings;
         private readonly ConcurrentDictionary<int, Job> _activeJobs = new ConcurrentDictionary<int, Job>();
+        private readonly ConcurrentDictionary<int, CancellationTokenSource> _jobCancellations = new();
         private Timer _heartbeatTimer;
         private string _workerId;
         private WorkerStatus _status = WorkerStatus.Idle;
@@ -79,38 +81,197 @@ namespace JobQueueSystem.WorkerNodes.Services
             {
                 using var scope = _scopeFactory.CreateScope();
                 var rabbitReceiver = scope.ServiceProvider.GetRequiredService<RabbitReceiver>();
+                string queueName = GetQueueName(workerId);
 
-                // Queue name specific to this worker
-                string queueName = $"worker.{workerId}";
-                _logger.LogInformation($"Subscribing to job queue: {queueName}");
+                _logger.LogInformation("Subscribing to job queue: {QueueName}", queueName);
 
                 await rabbitReceiver.StartReceivingAsync(
                     queueName,
-                    async (message) => {
-                        // Deserialize message to Job
-                        try
-                        {
-                            var job = JsonConvert.DeserializeObject<Job>(message);
-                            if (job != null)
-                            {
-                                _logger.LogInformation($"Received job {job.Id} from queue");
-                                await AcceptJob(job);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, $"Error processing message from queue: {message}");
-                        }
-                    },
+                    async (message) => await HandleMessageAsync(message),
                     routingKeyOverride: queueName,
                     cancellationToken: cancellationToken);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error subscribing to job queue for worker {workerId}");
+                _logger.LogError(ex, "Error subscribing to job queue for worker {WorkerId}", workerId);
                 throw;
             }
         }
+
+
+        //private async Task SubscribeToRabbitJobQueue(string workerId, CancellationToken cancellationToken)
+        //{
+        //    try
+        //    {
+        //        using var scope = _scopeFactory.CreateScope();
+        //        var rabbitReceiver = scope.ServiceProvider.GetRequiredService<RabbitReceiver>();
+
+        //        // Queue name specific to this worker
+        //        string queueName = $"worker.{workerId}";
+        //        _logger.LogInformation($"Subscribing to job queue: {queueName}");
+
+        //        await rabbitReceiver.StartReceivingAsync(
+        //            queueName,
+        //            async (message) => {
+        //                // Deserialize message to Job
+        //                try
+        //                {
+        //                    var job = JsonConvert.DeserializeObject<Job>(message);
+        //                    if (job != null)
+        //                    {
+        //                        _logger.LogInformation($"Received job {job.Id} from queue");
+        //                        await AcceptJob(job);
+        //                    }
+        //                }
+        //                catch (Exception ex)
+        //                {
+        //                    _logger.LogError(ex, $"Error processing message from queue: {message}");
+        //                }
+        //            },
+        //            routingKeyOverride: queueName,
+        //            cancellationToken: cancellationToken);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, $"Error subscribing to job queue for worker {workerId}");
+        //        throw;
+        //    }
+        //}
+
+        private string GetQueueName(string workerId)
+        {
+            return $"worker.{workerId}";
+        }
+
+        private async Task HandleMessageAsync(string message)
+        {
+            try
+            {
+                var controlMessage = DeserializeMessage(message);
+                if (controlMessage == null)
+                {
+                    _logger.LogWarning("Received null or invalid JobControlMessage.");
+                    return;
+                }
+
+                await ProcessJobControlMessageAsync(controlMessage);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing job control message: {Message}", message);
+            }
+        }
+
+        private JobControlMessage? DeserializeMessage(string message)
+        {
+            try
+            {
+                return JsonConvert.DeserializeObject<JobControlMessage>(message);
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogError(ex, "Failed to deserialize message: {Message}", message);
+                return null;
+            }
+        }
+
+        private async Task ProcessJobControlMessageAsync(JobControlMessage controlMessage)
+        {
+            switch (controlMessage.Type)
+            {
+                case JobControlType.AssignJobToWorker:
+                    await HandleAssignJobAsync(controlMessage.Job);
+                    break;
+
+                case JobControlType.StopJob:
+                    await HandleStopJobAsync(controlMessage.JobId);
+                    break;
+
+                case JobControlType.RestartJob:
+                    await HandleRestartJobAsync(controlMessage.JobId);
+                    break;
+
+                default:
+                    _logger.LogWarning("Unhandled job control type: {Type}", controlMessage.Type);
+                    break;
+            }
+        }
+
+        private async Task<bool> HandleAssignJobAsync(Job? job)
+        {
+            if (job == null)
+            {
+                _logger.LogWarning("AssignJob received with null Job.");
+                return false;
+            }
+
+            _logger.LogInformation("Accepting job {JobId}", job.Id);
+            if (_activeJobs.Count >= _settings.ConcurrencyLimit)
+            {
+                _logger.LogWarning($"Rejecting job {job.Id}: Worker at capacity");
+                return false;
+            }
+
+            if (!_activeJobs.TryAdd(job.Id, job))
+            {
+                _logger.LogWarning($"Job {job.Id} is already being processed by this worker");
+                return false;
+            }
+
+            UpdateWorkerStatus();
+            // Process job asynchronously
+            StartBackgroundJobExecution(job);
+            return true;
+        }
+
+        private async Task HandleStopJobAsync(int? jobId)
+        {
+            if (!jobId.HasValue)
+            {
+                _logger.LogWarning("StopJob received without JobId.");
+                return;
+            }
+
+            if (_jobCancellations.TryRemove(jobId.Value, out var cts))
+            {
+                cts.Cancel();
+                _logger.LogInformation("Requested cancellation for job {JobId}", jobId);
+            }
+            else
+            {
+                _logger.LogWarning("No running job found to cancel with ID {JobId}", jobId);
+            }
+        }
+
+        private async Task HandleRestartJobAsync(int? jobId)
+        {
+            if (!jobId.HasValue)
+            {
+                _logger.LogWarning("RestartJob received without JobId.");
+                return;
+            }
+
+            await HandleStopJobAsync(jobId);
+
+            if (_activeJobs.TryGetValue(jobId.Value, out var existingJob))
+            {
+                _logger.LogInformation("Restarting job {JobId}", jobId);
+
+                // Reset state
+                existingJob.Status = JobStatus.Pending;
+                existingJob.Progress = 0;
+                existingJob.ErrorMessage = null;
+                existingJob.StartTime = DateTime.UtcNow;
+                existingJob.EndTime = null;
+
+                StartBackgroundJobExecution(existingJob);
+            }
+            else
+            {
+                _logger.LogWarning("Cannot restart job {JobId} — job not found in active jobs.", jobId);
+            }
+        }
+
 
         private async void SendHeartbeat(object state)
         {
@@ -150,7 +311,7 @@ namespace JobQueueSystem.WorkerNodes.Services
             return true;
         }
 
-        private async Task ProcessJob(Job job)
+        private async Task ProcessJob(Job job, CancellationToken token)
         {
             _logger.LogInformation($"Starting job {job.Id} ({job.JobName})");
 
@@ -170,7 +331,7 @@ namespace JobQueueSystem.WorkerNodes.Services
                         // Update progress
                         job.Progress = progress;
                         await apiClient.UpdateJobProgress(job.Id, progress);
-                    }));
+                    }), token);
 
                     // Update job status based on result
                     job.Status = result.Success ? JobStatus.Completed : JobStatus.Failed;
@@ -194,13 +355,19 @@ namespace JobQueueSystem.WorkerNodes.Services
 
         private void StartBackgroundJobExecution(Job job)
         {
-            _ = Task.Run(() => ExecuteJobInternalAsync(job));
+            var cts = new CancellationTokenSource();
+            _jobCancellations.TryAdd(job.Id, cts);
+            _ = Task.Run(() => ExecuteJobInternalAsync(job, cts.Token));
         }
-        private async Task ExecuteJobInternalAsync(Job job)
+        private async Task ExecuteJobInternalAsync(Job job, CancellationToken token)
         {
             try
             {
-                await ProcessJob(job);
+                await ProcessJob(job, token);
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogInformation($"Job {job.Id} was cancelled.");
             }
             catch (Exception ex)
             {
@@ -210,6 +377,7 @@ namespace JobQueueSystem.WorkerNodes.Services
             finally
             {
                 _activeJobs.TryRemove(job.Id, out _);
+                _jobCancellations.TryRemove(job.Id, out _);
                 UpdateWorkerStatus();
             }
         }

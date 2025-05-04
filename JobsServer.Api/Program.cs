@@ -9,6 +9,9 @@ using JobsServer.Infrastructure;
 using JobsServer.Api.Middleware;
 using JobsServer.Api.SignalR;
 using JobsServer.Api.Controllers;
+using JobsServer.Infrastructure.RabbitMQ;
+using JobQueueSystem.Core.Configs;
+using Microsoft.Win32;
 
 var builder = WebApplication.CreateBuilder(args);
 // Configure services
@@ -72,15 +75,21 @@ void ConfigureServices(WebApplicationBuilder builder)
 
     // Register AutoMapper
     builder.Services.AddAutoMapper(typeof(JobProfile));
-    // Register Notifier
+    // Register Notifier and MessagePublisher
     builder.Services.AddSingleton<IJobUpdateNotifier, JobUpdateNotifier>();
+    // Register RabbitMQ dependencies
+    var rabbitMqConfig = builder.Configuration.GetSection("RabbitMQ").Get<RabbitMQConfig>();
+    builder.Services.AddSingleton(rabbitMqConfig);
+    builder.Services.AddSingleton<RabbitConnectionFactory>();
+    builder.Services.AddScoped<IRabbitSender, RabbitSender>();
+    builder.Services.AddScoped<IWorkerMessagePublisher, WorkerMessagePublisher>();
 
     // Register Job services
-    builder.Services.AddScoped<IJobRepository, JobRepository>();
+    builder.Services.AddScoped<IJobRepository, JobRepository>();    
     builder.Services.AddScoped<IJobService, JobService>();
     builder.Services.AddScoped<IWorkerRepository, WorkerRepository>();
+  
 
-    
     // Add SignalR services
     builder.Services.AddSignalR();
 }
